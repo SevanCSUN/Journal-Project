@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../settings/settings_view.dart';
 import 'sample_item.dart';
-import 'sample_item_details_view.dart';
+//import 'sample_item_details_view.dart';
+import 'page_list_view.dart';
 
 /// Displays a list of SampleItems.
 class SampleItemListView extends StatelessWidget {
@@ -55,12 +56,18 @@ class SampleItemListView extends StatelessWidget {
               foregroundImage: AssetImage('assets/images/placeholder_img.png'),
             ),
             onTap: () {
-              // Navigate to the details page. If the user leaves and returns to
-              // the app after it has been killed while running in the
-              // background, the navigation stack is restored.
-              Navigator.restorablePushNamed(
+              Navigator.push(
                 context,
-                SampleItemDetailsView.routeName,
+                MaterialPageRoute(
+                  builder: (context) => PageListView(
+                    journalName: 'Journal ${item.id}', // Pass the journal name or ID
+                    pages: [
+                      'Page 1',
+                      'Page 2',
+                      'Page 3',
+                    ], // Pages specific to the journal
+                  ),
+                ),
               );
             }
           );

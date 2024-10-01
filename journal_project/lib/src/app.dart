@@ -66,22 +66,30 @@ class MyApp extends StatelessWidget {
 
           // Define a function to handle named routes in order to support
           // Flutter web url navigation and deep linking.
-          onGenerateRoute: (RouteSettings routeSettings) {
-            return MaterialPageRoute<void>(
-              settings: routeSettings,
-              builder: (BuildContext context) {
-                switch (routeSettings.name) {
-                  case SettingsView.routeName:
-                    return SettingsView(controller: settingsController);
-                  case SampleItemDetailsView.routeName:
-                    return const SampleItemDetailsView();
-                  case SampleItemListView.routeName:
-                  default:
-                    return const SampleItemListView();
-                }
-              },
-            );
-          },
+          // Define a function to handle named routes in order to support
+// Flutter web URL navigation and deep linking.
+        onGenerateRoute: (RouteSettings routeSettings) {
+          switch (routeSettings.name) {
+            case SettingsView.routeName:
+              return MaterialPageRoute<void>(
+                settings: routeSettings,
+                builder: (BuildContext context) => SettingsView(controller: settingsController),
+              );
+            case SampleItemDetailsView.routeName:
+              // Extract arguments and cast them to the expected type
+              final String pageTitle = routeSettings.arguments as String; // Get the pageTitle from arguments
+              return MaterialPageRoute<void>(
+                settings: routeSettings,
+                builder: (BuildContext context) => SampleItemDetailsView(pageTitle: pageTitle),
+              );
+            case SampleItemListView.routeName:
+            default:
+              return MaterialPageRoute<void>(
+                settings: routeSettings,
+                builder: (BuildContext context) => const SampleItemListView(),
+              );
+          }
+        },
         );
       },
     );
