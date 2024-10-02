@@ -61,7 +61,7 @@ class SampleItemListView extends StatelessWidget {
                 MaterialPageRoute(
                   builder: (context) => PageListView(
                     journalName: 'Journal ${item.id}', // Pass the journal name or ID
-                    pages: [
+                    pages: const [
                       'Page 1',
                       'Page 2',
                       'Page 3',
