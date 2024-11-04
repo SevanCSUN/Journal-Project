@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'sample_item_details_view.dart'; // Import the details view
+import 'page_view.dart'; // Import the details view
 
 /// Displays a list of pages for a given journal.
 class PageListView extends StatelessWidget {
