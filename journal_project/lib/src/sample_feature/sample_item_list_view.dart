@@ -17,8 +17,8 @@ class SampleItemListView extends StatefulWidget {
 }
 
 class _SampleItemListViewState extends State<SampleItemListView> {
-  int focusedJournalIndex = -1; // Keeps track of which journal is focused and tapped
-  bool showPageList = false; // Toggles the vertical list of pages
+  int focusedJournalIndex = -1; // variable for the focused journal
+  bool showPageList = false; // variable for toggling the vertical page list
 
   @override
   Widget build(BuildContext context) {
@@ -36,14 +36,56 @@ class _SampleItemListViewState extends State<SampleItemListView> {
       ),
       body: Column(
         children: [
-          // Push content to the bottom with a Spacer
+          // Container holds the 7 columns (days of the week)
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Container(
+              height: 200, // Height for the container
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200, // background color
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.5),
+                    spreadRadius: 2,
+                    blurRadius: 5,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0), // Add padding inside the container
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween, // Even spacing between rectangles
+                  children: List.generate(7, (index) {
+                    return Container(
+                      width: 45, //  width for each rectangle
+                      height: 180, // Height of each rectangle
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade100, // Placeholder color for the rectangles
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'Day ${index + 1}', // Placeholder text for the day
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+            ),
+          ),
+
+          // Push content to the bottom w/ a Spacer
           const Spacer(),
           
           // Horizontal journal list
           SizedBox(
-            height: 150, // The overall height for each card
+            height: 150, // The height of the horizontal list
             child: PageView.builder(
-              controller: PageController(viewportFraction: 0.35), // Reduced width of cards
+              controller: PageController(viewportFraction: 0.35), // viewportFraction for scaling
               itemCount: widget.items.length,
               onPageChanged: (index) {
                 // Close the vertical list when swiping to a new journal
@@ -147,7 +189,7 @@ class _SampleItemListViewState extends State<SampleItemListView> {
                       ],
                     ),
                     child: ListView.builder(
-                      shrinkWrap: true, // Let it take only as much space as it needs
+                      shrinkWrap: true, // take only as much space as needed
                       physics: const NeverScrollableScrollPhysics(), // Disable scrolling for this list
                       itemCount: 3, // Number of pages
                       itemBuilder: (context, index) {
