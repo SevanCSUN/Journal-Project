@@ -22,6 +22,9 @@ class _SampleItemListViewState extends State<SampleItemListView> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDarkTheme = theme.brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Journal App Home-Page'),
@@ -43,7 +46,7 @@ class _SampleItemListViewState extends State<SampleItemListView> {
               child: Container(
                 height: 230, // Height for the container
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade200, // background color
+                  color: isDarkTheme ? Colors.grey.shade800 : Colors.grey.shade200, // background color
                   borderRadius: BorderRadius.circular(10),
                   boxShadow: [
                     BoxShadow(
@@ -74,7 +77,7 @@ class _SampleItemListViewState extends State<SampleItemListView> {
                                 Container(
                                   height: 180, // Height of each rectangle
                                   decoration: BoxDecoration(
-                                    color: Colors.blue.shade100, // Placeholder color for the rectangles
+                                    color: isDarkTheme ? Colors.blue.shade700 : Colors.blue.shade100, // Placeholder color for the rectangles
                                     borderRadius: BorderRadius.circular(5),
                                   ),
                                 ),
@@ -185,7 +188,7 @@ class _SampleItemListViewState extends State<SampleItemListView> {
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: isDarkTheme ? Colors.grey.shade800 : Colors.grey.shade200,
                         borderRadius: BorderRadius.circular(10),
                         boxShadow: [
                           BoxShadow(
@@ -196,27 +199,30 @@ class _SampleItemListViewState extends State<SampleItemListView> {
                           ),
                         ],
                       ),
-                      child: ListView.builder(
-                        shrinkWrap: true, // takes only as much space as needed
-                        physics: const NeverScrollableScrollPhysics(), // Disable scrolling for this list
-                        itemCount: 3, // Number of pages
-                        itemBuilder: (context, index) {
-                          return ListTile(
-                            title: Text('Page ${index + 1}'),
-                            onTap: () {
-                              // Navigate to the selected page
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => PageListView(
-                                    journalName: 'Journal ${focusedJournalIndex + 1}',
-                                    pages: ['Page ${index + 1}'],
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0), // Add padding inside the container
+                        child: ListView.builder(
+                          shrinkWrap: true, // takes only as much space as needed
+                          physics: const NeverScrollableScrollPhysics(), // Disable scrolling for this list
+                          itemCount: 3, // Number of pages
+                          itemBuilder: (context, index) {
+                            return ListTile(
+                              title: Text('Page ${index + 1}'),
+                              onTap: () {
+                                // Navigate to the selected page
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => PageListView(
+                                      journalName: 'Journal ${focusedJournalIndex + 1}',
+                                      pages: ['Page ${index + 1}'],
+                                    ),
                                   ),
-                                ),
-                              );
-                            },
-                          );
-                        },
+                                );
+                              },
+                            );
+                          },
+                        ),
                       ),
                     ),
                   ),

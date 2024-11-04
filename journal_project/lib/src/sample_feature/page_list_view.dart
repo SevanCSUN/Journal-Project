@@ -14,6 +14,9 @@ class PageListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDarkTheme = theme.brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
         title: Text('$journalName Pages'),
@@ -24,6 +27,7 @@ class PageListView extends StatelessWidget {
           final page = pages[index];
 
           return ListTile(
+            tileColor: isDarkTheme ? Colors.grey.shade800 : Colors.white,
             title: Text(page),
             onTap: () {
               // Navigate to SampleItemDetailsView when a page is tapped
