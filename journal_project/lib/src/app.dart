@@ -7,6 +7,7 @@ import 'sample_feature/page_view.dart';
 import 'sample_feature/landing_page.dart';
 import 'settings/settings_controller.dart';
 import 'settings/settings_view.dart';
+import 'sample_feature/login_page.dart';
 
 /// The Widget that configures your application.
 class MyApp extends StatelessWidget {
@@ -84,28 +85,34 @@ class MyApp extends StatelessWidget {
 
           // Define a function to handle named routes in order to support
           // Flutter web URL navigation and deep linking.
-        onGenerateRoute: (RouteSettings routeSettings) {
-          switch (routeSettings.name) {
-            case SettingsView.routeName:
-              return MaterialPageRoute<void>(
-                settings: routeSettings,
-                builder: (BuildContext context) => SettingsView(controller: settingsController),
-              );
-            case SampleItemDetailsView.routeName:
-              // Extract arguments and cast them to the expected type
-              final String pageTitle = routeSettings.arguments as String; // Get the pageTitle from arguments
-              return MaterialPageRoute<void>(
-                settings: routeSettings,
-                builder: (BuildContext context) => SampleItemDetailsView(pageTitle: pageTitle),
-              );
-            case SampleItemListView.routeName:
-            default:
-              return MaterialPageRoute<void>(
-                settings: routeSettings,
-                builder: (BuildContext context) => const SampleItemListView(),
-              );
-          }
-        },
+          initialRoute: '/login', // Set the initial route to login
+          onGenerateRoute: (RouteSettings routeSettings) {
+            switch (routeSettings.name) {
+              case SettingsView.routeName:
+                return MaterialPageRoute<void>(
+                  settings: routeSettings,
+                  builder: (BuildContext context) => SettingsView(controller: settingsController),
+                );
+              case SampleItemDetailsView.routeName:
+                // Extract arguments and cast them to the expected type
+                final String pageTitle = routeSettings.arguments as String; // Get the pageTitle from arguments
+                return MaterialPageRoute<void>(
+                  settings: routeSettings,
+                  builder: (BuildContext context) => SampleItemDetailsView(pageTitle: pageTitle),
+                );
+              case '/login':
+                return MaterialPageRoute<void>(
+                  settings: routeSettings,
+                  builder: (BuildContext context) => LoginPage(),
+                );
+              case LandingPage.routeName:
+              default:
+                return MaterialPageRoute<void>(
+                  settings: routeSettings,
+                  builder: (BuildContext context) => const LandingPage(),
+                );
+            }
+          },
         );
       },
     );

@@ -3,8 +3,8 @@ import '../settings/settings_view.dart';
 import 'sample_item.dart';
 import 'page_list_view.dart';
 
-class SampleItemListView extends StatefulWidget {
-  const SampleItemListView({
+class LandingPage extends StatefulWidget {
+  const LandingPage({
     super.key,
     this.items = const [SampleItem(1), SampleItem(2), SampleItem(3)],
   });
@@ -13,10 +13,10 @@ class SampleItemListView extends StatefulWidget {
   final List<SampleItem> items;
 
   @override
-  State<SampleItemListView> createState() => _SampleItemListViewState();
+  State<LandingPage> createState() => _LandingPage();
 }
 
-class _SampleItemListViewState extends State<SampleItemListView> {
+class _LandingPage extends State<LandingPage> {
   int focusedJournalIndex = -1; // variable for the focused journal
   bool showPageList = false; // variable for toggling the vertical page list
 
@@ -28,6 +28,7 @@ class _SampleItemListViewState extends State<SampleItemListView> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Journal App Home-Page'),
+        automaticallyImplyLeading: false, // Remove the back arrow
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
