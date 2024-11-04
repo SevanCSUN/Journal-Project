@@ -40,7 +40,7 @@ class _SampleItemListViewState extends State<SampleItemListView> {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Container(
-              height: 200, // Height for the container
+              height: 230, // Height for the container
               decoration: BoxDecoration(
                 color: Colors.grey.shade200, // background color
                 borderRadius: BorderRadius.circular(10),
@@ -55,24 +55,34 @@ class _SampleItemListViewState extends State<SampleItemListView> {
               ),
               child: Padding(
                 padding: const EdgeInsets.all(8.0), // Add padding inside the container
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween, // Even spacing between rectangles
-                  children: List.generate(7, (index) {
-                    return Container(
-                      width: 45, //  width for each rectangle
-                      height: 180, // Height of each rectangle
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade100, // Placeholder color for the rectangles
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      child: Center(
-                        child: Text(
-                          'Day ${index + 1}', // Placeholder text for the day
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ),
-                    );
-                  }),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween, // Even spacing between labels
+                      children: List.generate(7, (index) {
+                        final days = ['MON', 'TUES', 'WED', 'THUR', 'FRI', 'SAT', 'SUN'];
+                        return Container(
+                          width: 45, // width for each container
+                          child: Column(
+                            children: [
+                              Text(
+                                days[index], // text for each day
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                              const SizedBox(height: 8), // Space between label and rectangle
+                              Container(
+                                height: 180, // Height of each rectangle
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade100, // Placeholder color for the rectangles
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    ),
+                  ],
                 ),
               ),
             ),
