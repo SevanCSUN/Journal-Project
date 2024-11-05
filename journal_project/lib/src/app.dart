@@ -32,7 +32,7 @@ class MyApp extends StatelessWidget {
           //the below 3 lines are needed for device preview. remove them when ready to push
 
 
-          useInheritedMediaQuery: true,
+          //useInheritedMediaQuery: true, // this is deprecated
           locale: DevicePreview.locale(context),
           builder: DevicePreview.appBuilder,
           // Providing a restorationScopeId allows the Navigator built by the
@@ -103,7 +103,7 @@ class MyApp extends StatelessWidget {
               case '/login':
                 return MaterialPageRoute<void>(
                   settings: routeSettings,
-                  builder: (BuildContext context) => LoginPage(),
+                  builder: (BuildContext context) => const LoginPage(),
                 );
               case LandingPage.routeName:
               default:

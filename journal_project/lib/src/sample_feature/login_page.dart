@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:journal_project/src/sample_feature/landing_page.dart';
 
 class LoginPage extends StatelessWidget {
+  const LoginPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Login'),
+        title: const Text('Login'),
         automaticallyImplyLeading: false, // Remove the back arrow
       ),
       body: Padding(
@@ -14,31 +16,31 @@ class LoginPage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            TextField(
+            const TextField(
               decoration: InputDecoration(
                 labelText: 'Username',
               ),
             ),
-            SizedBox(height: 16.0),
-            TextField(
+            const SizedBox(height: 16.0),
+            const TextField(
               decoration: InputDecoration(
                 labelText: 'Password',
               ),
               obscureText: true,
             ),
-            SizedBox(height: 32.0),
+            const SizedBox(height: 32.0),
             ElevatedButton(
               onPressed: () {
                 // Handle login logic
               },
-              child: Text('Login'),
+              child: const Text('Login'),
             ),
-            SizedBox(height: 16.0), // Space between buttons
+            const SizedBox(height: 16.0), // Space between buttons
             ElevatedButton(
               onPressed: () {
                 Navigator.pushReplacementNamed(context, LandingPage.routeName);
               },
-              child: Text('Continue as Guest'),
+              child: const Text('Continue as Guest'),
             ),
           ],
         ),

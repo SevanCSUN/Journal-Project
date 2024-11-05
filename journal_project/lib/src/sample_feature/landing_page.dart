@@ -66,7 +66,7 @@ class _LandingPage extends State<LandingPage> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween, // Align the columns to the start and end
                         children: List.generate(7, (index) {
                           final days = ['MON', 'TUES', 'WED', 'THUR', 'FRI', 'SAT', 'SUN'];
-                          return Container(
+                          return SizedBox(
                             width: 45, // width for each container
                             child: Column(
                               children: [
