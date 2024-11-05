@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../settings/settings_view.dart';
 import 'sample_item.dart';
 import 'page_list_view.dart';
+import 'indiv_page_view.dart'; // Import the PageView
 
 class LandingPage extends StatefulWidget {
   const LandingPage({
@@ -219,9 +220,8 @@ class _LandingPage extends State<LandingPage> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => PageListView(
-                                      journalName: 'Journal ${focusedJournalIndex + 1}',
-                                      pages: ['Page ${index + 1}'],
+                                    builder: (context) => IndivPageView(
+                                      pageTitle: 'Page ${index + 1}',
                                     ),
                                   ),
                                 );

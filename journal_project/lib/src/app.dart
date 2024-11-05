@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-import 'sample_feature/page_view.dart';
+import 'sample_feature/indiv_page_view.dart';
 import 'sample_feature/landing_page.dart';
 import 'settings/settings_controller.dart';
 import 'settings/settings_view.dart';
@@ -93,12 +93,12 @@ class MyApp extends StatelessWidget {
                   settings: routeSettings,
                   builder: (BuildContext context) => SettingsView(controller: settingsController),
                 );
-              case SampleItemDetailsView.routeName:
+              case IndivPageView.routeName:
                 // Extract arguments and cast them to the expected type
                 final String pageTitle = routeSettings.arguments as String; // Get the pageTitle from arguments
                 return MaterialPageRoute<void>(
                   settings: routeSettings,
-                  builder: (BuildContext context) => SampleItemDetailsView(pageTitle: pageTitle),
+                  builder: (BuildContext context) => IndivPageView(pageTitle: pageTitle),
                 );
               case '/login':
                 return MaterialPageRoute<void>(
