@@ -17,7 +17,7 @@ class LandingPage extends StatefulWidget {
 }
 
 class _LandingPage extends State<LandingPage> {
-  int focusedJournalIndex = -1; // variable for the focused journal
+  int focusedJournalIndex = 0; // Set initial focused journal to the first one
   bool showPageList = false; // variable for toggling the vertical page list
 
   @override
@@ -97,16 +97,13 @@ class _LandingPage extends State<LandingPage> {
             SizedBox(
               height: 150, // The height of the horizontal list
               child: PageView.builder(
-                controller: PageController(viewportFraction: 0.35), // viewportFraction for scaling
+                controller: PageController(viewportFraction: 0.35, initialPage: focusedJournalIndex), // viewportFraction for scaling
                 itemCount: widget.items.length,
                 onPageChanged: (index) {
-                  // Close the vertical list when swiping to a new journal
-                  if (focusedJournalIndex != index) {
-                    setState(() {
-                      showPageList = false;
-                      focusedJournalIndex = index;
-                    });
-                  }
+                  setState(() {
+                    focusedJournalIndex = index;
+                    showPageList = false; // Close the vertical list when swiping to a new journal
+                  });
                 },
                 itemBuilder: (BuildContext context, int index) {
                   final item = widget.items[index];
@@ -119,7 +116,7 @@ class _LandingPage extends State<LandingPage> {
                     child: GestureDetector(
                       onTap: () {
                         setState(() {
-                          if (focusedJournalIndex == index) {
+                          if (isFocused) {
                             if (showPageList) {
                               // If page list is already open, navigate to full list
                               Navigator.push(
@@ -135,10 +132,6 @@ class _LandingPage extends State<LandingPage> {
                               // Toggle the vertical page list
                               showPageList = true;
                             }
-                          } else {
-                            // Set the focused journal and show the page list
-                            focusedJournalIndex = index;
-                            showPageList = true;
                           }
                         });
                       },
