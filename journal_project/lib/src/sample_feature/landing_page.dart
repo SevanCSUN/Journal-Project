@@ -205,8 +205,20 @@ class _LandingPage extends State<LandingPage> {
                         child: ListView.builder(
                           shrinkWrap: true, // takes only as much space as needed
                           physics: const NeverScrollableScrollPhysics(), // Disable scrolling for this list
-                          itemCount: 3, // Number of pages
+                          itemCount: 3 + 1, // Number of pages + 1 for the placeholder
                           itemBuilder: (context, index) {
+                            if (index == 3) {
+                              // Placeholder + button
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    // Action for adding a new page
+                                  },
+                                  child: const Text('+'),
+                                ),
+                              );
+                            }
                             return ListTile(
                               title: Text('Page ${index + 1}'),
                               onTap: () {
