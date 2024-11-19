@@ -99,7 +99,7 @@ class _LandingPage extends State<LandingPage> {
               height: 150, // The height of the horizontal list
               child: PageView.builder(
                 controller: PageController(viewportFraction: 0.35, initialPage: focusedJournalIndex), // viewportFraction for scaling
-                itemCount: widget.items.length,
+                itemCount: widget.items.length + 1, // Add one more item for the placeholder
                 onPageChanged: (index) {
                   setState(() {
                     focusedJournalIndex = index;
@@ -107,6 +107,38 @@ class _LandingPage extends State<LandingPage> {
                   });
                 },
                 itemBuilder: (BuildContext context, int index) {
+                  if (index == widget.items.length) {
+                    // Placeholder for creating a new journal
+                    return Transform.scale(
+                      scale: 0.85, // scaling for the placeholder
+                      child: GestureDetector(
+                        onTap: () {
+                          // Action for creating a new journal
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.all(8.0), // spacing between cards
+                          child: Card(
+                            elevation: 5,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(Icons.add, size: 60), // Placeholder icon
+                                SizedBox(height: 10), // Space between icon and text
+                                Text(
+                                  'Create Journal',
+                                  style: TextStyle(fontSize: 14),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
                   final item = widget.items[index];
 
                   // Scale effect to show that a journal is focused
