@@ -107,10 +107,12 @@ class _LandingPage extends State<LandingPage> {
                   });
                 },
                 itemBuilder: (BuildContext context, int index) {
-                  if (index == widget.items.length) {
+                  bool isFocused = focusedJournalIndex == index;
+
+                  if (index == 0) {
                     // Placeholder for creating a new journal
                     return Transform.scale(
-                      scale: 0.85, // scaling for the placeholder
+                      scale: isFocused ? 1.0 : 0.85, // scaling for the placeholder
                       child: GestureDetector(
                         onTap: () {
                           // Action for creating a new journal
@@ -122,9 +124,9 @@ class _LandingPage extends State<LandingPage> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: Column(
+                            child: const Column(
                               mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
+                              children: [
                                 Icon(Icons.add, size: 60), // Placeholder icon
                                 SizedBox(height: 10), // Space between icon and text
                                 Text(
@@ -139,11 +141,9 @@ class _LandingPage extends State<LandingPage> {
                     );
                   }
 
-                  final item = widget.items[index];
+                  final item = widget.items[index - 1]; // Adjust index for the existing items
 
                   // Scale effect to show that a journal is focused
-                  bool isFocused = focusedJournalIndex == index;
-
                   return Transform.scale(
                     scale: isFocused ? 1.0 : 0.85, // scaling for focused journal
                     child: GestureDetector(
