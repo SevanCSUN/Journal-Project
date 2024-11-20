@@ -5,6 +5,8 @@ import 'src/app.dart';
 import 'src/settings/settings_controller.dart';
 import 'src/settings/settings_service.dart';
 import 'package:device_preview/device_preview.dart';
+import 'src/sample_feature/landing_page.dart';
+
 
 void main() async {
   // Set up the SettingsController, which will glue user settings to multiple
@@ -27,11 +29,29 @@ void main() async {
   //look at app.dart line 31 for other snippets to remove.
   //lastly, the device preview dependancy was added to the pubspec.yaml file. this does not need to be removed.
 
- 
+
+
 
 
   runApp(DevicePreview(
     enabled: !kReleaseMode,
     builder: (context) => MyApp(settingsController: settingsController), // Wrap your app
   ));
+}
+
+
+class MyApp extends StatelessWidget {
+  final SettingsController settingsController;
+
+  const MyApp({Key? key, required this.settingsController}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData.light(),
+      darkTheme: ThemeData.dark(),
+      home: LandingPage(), // Set TaskCreationScreen as the home
+    );
+  }
 }
