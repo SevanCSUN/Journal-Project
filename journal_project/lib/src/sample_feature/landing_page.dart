@@ -3,6 +3,8 @@ import '../settings/settings_view.dart';
 import 'sample_item.dart';
 import 'page_list_view.dart';
 import 'indiv_page_view.dart'; // Import the PageView
+import 'journal_page_view.dart'; // Import the individual Journal view
+
 
 class LandingPage extends StatefulWidget {
   const LandingPage({
@@ -123,11 +125,10 @@ class _LandingPage extends State<LandingPage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => PageListView(
-                                    journalName: 'Journal ${item.id}',
-                                    pages: const ['Page 1', 'Page 2', 'Page 3'],
+                                  builder: (context) => JournalPage(
+                                    journalName: 'Journal ${item.id}'
+                                    ),
                                   ),
-                                ),
                               );
                             } else {
                               // Toggle the vertical page list

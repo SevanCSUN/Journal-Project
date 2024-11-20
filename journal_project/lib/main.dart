@@ -5,7 +5,7 @@ import 'src/app.dart';
 import 'src/settings/settings_controller.dart';
 import 'src/settings/settings_service.dart';
 import 'package:device_preview/device_preview.dart';
-import 'src/sample_feature/task_creation_screen.dart';
+import 'src/sample_feature/landing_page.dart';
 
 
 void main() async {
@@ -51,7 +51,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData.light(),
       darkTheme: ThemeData.dark(),
-      home: TaskCreationScreen(), // Set TaskCreationScreen as the home
+      home: LandingPage(), // Set TaskCreationScreen as the home
     );
   }
 }
