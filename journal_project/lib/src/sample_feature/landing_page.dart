@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../settings/settings_view.dart';
 import 'sample_item.dart';
-import 'page_list_view.dart';
+//import 'page_list_view.dart';
 import 'indiv_page_view.dart'; // Import the PageView
 import 'journal_page_view.dart'; // Import the individual Journal view
 
@@ -12,7 +12,7 @@ class LandingPage extends StatefulWidget {
     this.items = const [SampleItem(1), SampleItem(2), SampleItem(3)],
   });
 
-  static const routeName = '/';
+  static const routeName = '/landing';
   final List<SampleItem> items;
 
   @override
@@ -31,7 +31,7 @@ class _LandingPage extends State<LandingPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Journal App Home-Page'),
-        automaticallyImplyLeading: false, // Remove the back arrow
+        automaticallyImplyLeading: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),

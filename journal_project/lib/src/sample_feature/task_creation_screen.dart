@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class TaskCreationScreen extends StatefulWidget {
+  const TaskCreationScreen({super.key});
+
   @override
   _TaskCreationScreenState createState() => _TaskCreationScreenState();
 }

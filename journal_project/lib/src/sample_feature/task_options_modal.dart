@@ -4,7 +4,7 @@ class TaskModalScreen extends StatelessWidget {
   final String taskName;
   final String dateTime;
 
-  TaskModalScreen({
+  const TaskModalScreen({super.key, 
     required this.taskName,
     required this.dateTime,
   });

@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 class JournalPage extends StatefulWidget {
   final String journalName;
 
-  JournalPage({required this.journalName});
+  const JournalPage({super.key, required this.journalName});
 
   @override
   _JournalPageState createState() => _JournalPageState();
@@ -43,7 +43,7 @@ class _JournalPageState extends State<JournalPage>
   void _onScroll() {
     if (_scrollController.hasClients) {
       final offset = _scrollController.offset;
-      final rowHeight = 100.0; // Approximate row height for weeks
+      const rowHeight = 100.0; // Approximate row height for weeks
       final weeksScrolled = (offset / rowHeight).floor();
       final newMonth = DateTime.now().add(Duration(days: weeksScrolled * 7));
       final monthStart = DateTime(newMonth.year, newMonth.month);
