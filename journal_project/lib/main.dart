@@ -19,6 +19,7 @@ void main() async {
       options: firebase_options.DefaultFirebaseOptions.currentPlatform,
     );
   } catch (e) {
+    // ignore: avoid_print
     print('Firebase initialization error: $e');
   }
   // Set up the SettingsController, which will glue user settings to multiple
