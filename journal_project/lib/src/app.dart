@@ -8,6 +8,7 @@ import 'sample_feature/landing_page.dart';
 import 'settings/settings_controller.dart';
 import 'settings/settings_view.dart';
 import 'sample_feature/login_page.dart';
+import 'settings/account_settings_view.dart';
 
 /// The Widget that configures your application.
 class MyApp extends StatelessWidget {
@@ -112,6 +113,10 @@ class MyApp extends StatelessWidget {
                   builder: (BuildContext context) => const LandingPage(),
                 );
             }
+          },
+          routes: {
+            SettingsView.routeName: (context) => SettingsView(controller: settingsController),
+            AccountSettingsView.routeName: (context) => const AccountSettingsView(),
           },
         );
       },

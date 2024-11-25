@@ -8,6 +8,7 @@ import 'package:device_preview/device_preview.dart';
 import 'src/sample_feature/landing_page.dart';
 import 'src/settings/settings_view.dart'; // Import SettingsView
 import 'src/sample_feature/login_page.dart'; // Import LoginPage
+import 'src/settings/account_settings_view.dart';
 
 void main() async {
   // Set up the SettingsController, which will glue user settings to multiple
@@ -52,6 +53,11 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute<void>(
               settings: routeSettings,
               builder: (BuildContext context) => SettingsView(controller: settingsController),
+            );
+          case AccountSettingsView.routeName:
+            return MaterialPageRoute<void>(
+              settings: routeSettings,
+              builder: (BuildContext context) => const AccountSettingsView(),
             );
           case '/':
           default:
