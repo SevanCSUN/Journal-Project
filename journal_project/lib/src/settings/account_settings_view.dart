@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AccountSettingsView extends StatelessWidget {
   const AccountSettingsView({super.key});
@@ -7,8 +8,8 @@ class AccountSettingsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Placeholder for user login status
-    final bool isLoggedIn = true; // Change this based on actual login status
+    final User? user = FirebaseAuth.instance.currentUser;
+    final bool isLoggedIn = user != null;
 
     return Scaffold(
       appBar: AppBar(
@@ -16,7 +17,6 @@ class AccountSettingsView extends StatelessWidget {
       ),
       body: Center(
         child: isLoggedIn
-            // ignore: dead_code // activates when loggedIn is true
             ? Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -30,8 +30,7 @@ class AccountSettingsView extends StatelessWidget {
                     const SizedBox(height: 20),
                     ListTile(
                       leading: const Icon(Icons.person),
-                      title: const Text('Username'),
-                      subtitle: const Text('user@example.com'),
+                      title: Text(user.email ?? 'No email'),
                       trailing: IconButton(
                         icon: const Icon(Icons.edit),
                         onPressed: () {
@@ -51,8 +50,9 @@ class AccountSettingsView extends StatelessWidget {
                     ListTile(
                       leading: const Icon(Icons.logout),
                       title: const Text('Logout'),
-                      onTap: () {
-                        // Add functionality to logout
+                      onTap: () async {
+                        await FirebaseAuth.instance.signOut();
+                        Navigator.pushReplacementNamed(context, '/');
                       },
                     ),
                   ],
