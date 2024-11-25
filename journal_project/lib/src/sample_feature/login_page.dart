@@ -13,25 +13,20 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  String? _loginError;
 
-  Future<void> _loginOrSignUp() async {
+  Future<void> _login() async {
     try {
       await _auth.signInWithEmailAndPassword(
         email: _emailController.text,
         password: _passwordController.text,
       );
+      Navigator.pushReplacementNamed(context, LandingPage.routeName);
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'user-not-found') {
-        await _auth.createUserWithEmailAndPassword(
-          email: _emailController.text,
-          password: _passwordController.text,
-        );
-      } else {
-        // Handle other errors
-        print('Error: $e');
-      }
+      setState(() {
+        _loginError = 'Login failed. Please check your credentials.';
+      });
     }
-    Navigator.pushReplacementNamed(context, LandingPage.routeName);
   }
 
   @override
@@ -61,9 +56,15 @@ class _LoginPageState extends State<LoginPage> {
               obscureText: true,
             ),
             const SizedBox(height: 32.0),
+            if (_loginError != null)
+              Text(
+                _loginError!,
+                style: TextStyle(color: Colors.red),
+              ),
+            const SizedBox(height: 16.0),
             ElevatedButton(
-              onPressed: _loginOrSignUp,
-              child: const Text('Login/SignUp'),
+              onPressed: _login,
+              child: const Text('Login'),
             ),
             const SizedBox(height: 16.0), // Space between buttons
             ElevatedButton(

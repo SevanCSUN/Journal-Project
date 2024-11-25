@@ -15,6 +15,8 @@ class DefaultFirebaseOptions {
         return ios;
       case TargetPlatform.macOS:
         return macos;
+      case TargetPlatform.windows:
+        return windows;
       default:
         throw UnsupportedError('DefaultFirebaseOptions are not supported for this platform.');
     }
@@ -59,5 +61,14 @@ class DefaultFirebaseOptions {
     appId: "1:715827816927:web:389737f8722470b2fcbc6a",
     iosClientId: "YOUR_IOS_CLIENT_ID",
     iosBundleId: "YOUR_IOS_BUNDLE_ID",
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: "AIzaSyD4FNzAV7FackxyoWOvTh9alFYq_FdGN-Q",
+    authDomain: "journal-project-comp585-fa2024.firebaseapp.com",
+    projectId: "journal-project-comp585-fa2024",
+    storageBucket: "journal-project-comp585-fa2024.firebasestorage.app",
+    messagingSenderId: "715827816927",
+    appId: "1:715827816927:web:389737f8722470b2fcbc6a",
   );
 }

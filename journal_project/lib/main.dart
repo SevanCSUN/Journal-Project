@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart'; // Import the generated file
+import 'firebase_options.dart' as firebase_options; // Import the generated file
 
 //import 'src/app.dart';
 import 'src/settings/settings_controller.dart';
@@ -16,7 +16,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
+      options: firebase_options.DefaultFirebaseOptions.currentPlatform,
     );
   } catch (e) {
     print('Firebase initialization error: $e');
