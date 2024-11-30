@@ -1,10 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../settings/settings_view.dart';
 import 'sample_item.dart';
-//import 'page_list_view.dart';
-import 'indiv_page_view.dart'; // Import the PageView
-import 'journal_page_view.dart'; // Import the individual Journal view
-
+import 'indiv_page_view.dart';
+import 'journal_page_view.dart';
 
 class LandingPage extends StatefulWidget {
   const LandingPage({
@@ -16,12 +16,50 @@ class LandingPage extends StatefulWidget {
   final List<SampleItem> items;
 
   @override
-  State<LandingPage> createState() => _LandingPage();
+  State<LandingPage> createState() => _LandingPageState();
 }
 
-class _LandingPage extends State<LandingPage> {
-  int focusedJournalIndex = 0; // Set initial focused journal to the first one
-  bool showPageList = false; // variable for toggling the vertical page list
+class _LandingPageState extends State<LandingPage> {
+  int focusedJournalIndex = 0; // Initial focused journal
+  bool showPageList = false; // Toggle for showing the vertical page list
+  List<Map<String, dynamic>> pages = []; // Store pages for the focused journal
+  bool isLoadingPages = false;
+
+  /// Add a new page to the focused journal
+  Future<void> _addPageToJournal(String journalId, String pageTitle) async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      throw Exception('User not authenticated');
+    }
+
+    final pageId = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('journals')
+        .doc(journalId)
+        .collection('pages')
+        .doc()
+        .id;
+
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('journals')
+        .doc(journalId)
+        .collection('pages')
+        .doc(pageId)
+        .set({
+      'title': pageTitle,
+      'content': '',
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    // Add to the local pages list
+    setState(() {
+      pages.add({'title': pageTitle});
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,12 +133,13 @@ class _LandingPage extends State<LandingPage> {
                 ),
               ),
             ),
-            const SizedBox(height: 50), // Just adds space between weekly view and journals view
+            const SizedBox(height: 50), // Space between weekly view and journal list
+
             // Horizontal journal list
             SizedBox(
-              height: 150, // The height of the horizontal list
+              height: 150, // Height of the horizontal list
               child: PageView.builder(
-                controller: PageController(viewportFraction: 0.35, initialPage: focusedJournalIndex), // viewportFraction for scaling
+                controller: PageController(viewportFraction: 0.35, initialPage: focusedJournalIndex),
                 itemCount: widget.items.length + 1, // Add one more item for the placeholder
                 onPageChanged: (index) {
                   setState(() {
@@ -114,13 +153,13 @@ class _LandingPage extends State<LandingPage> {
                   if (index == 0) {
                     // Placeholder for creating a new journal
                     return Transform.scale(
-                      scale: isFocused ? 1.0 : 0.85, // scaling for the placeholder
+                      scale: isFocused ? 1.0 : 0.85, // Scaling for the placeholder
                       child: GestureDetector(
                         onTap: () {
                           // Action for creating a new journal
                         },
                         child: Container(
-                          margin: const EdgeInsets.all(8.0), // spacing between cards
+                          margin: const EdgeInsets.all(8.0), // Spacing between cards
                           child: Card(
                             elevation: 5,
                             shape: RoundedRectangleBorder(
@@ -147,20 +186,20 @@ class _LandingPage extends State<LandingPage> {
 
                   // Scale effect to show that a journal is focused
                   return Transform.scale(
-                    scale: isFocused ? 1.0 : 0.85, // scaling for focused journal
+                    scale: isFocused ? 1.0 : 0.85, // Scaling for focused journal
                     child: GestureDetector(
                       onTap: () {
                         setState(() {
                           if (isFocused) {
                             if (showPageList) {
-                              // If page list is already open, navigate to full list
+                              // Navigate to full list of pages
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => JournalPage(
-                                    journalName: 'Journal ${item.id}'
-                                    ),
+                                    journalName: 'Journal ${item.id}',
                                   ),
+                                ),
                               );
                             } else {
                               // Toggle the vertical page list
@@ -169,9 +208,8 @@ class _LandingPage extends State<LandingPage> {
                           }
                         });
                       },
-                      // The container around the journal cards
                       child: Container(
-                        margin: const EdgeInsets.all(8.0), // spacing between cards
+                        margin: const EdgeInsets.all(8.0), // Spacing between cards
                         child: Card(
                           elevation: 5,
                           shape: RoundedRectangleBorder(
@@ -211,7 +249,7 @@ class _LandingPage extends State<LandingPage> {
             if (showPageList && focusedJournalIndex != -1)
               Column(
                 children: [
-                  const SizedBox(height: 10), // just adds space between journal cards and page list
+                  const SizedBox(height: 10), // Space between journal cards and page list
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: Container(
@@ -230,32 +268,61 @@ class _LandingPage extends State<LandingPage> {
                       child: Padding(
                         padding: const EdgeInsets.all(8.0), // Add padding inside the container
                         child: ListView.builder(
-                          shrinkWrap: true, // takes only as much space as needed
-                          physics: const NeverScrollableScrollPhysics(), // Disable scrolling for this list
-                          itemCount: 3 + 1, // Number of pages + 1 for the placeholder
+                          shrinkWrap: true, // Takes only as much space as needed
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: pages.length + 1, // Add one for the + button
                           itemBuilder: (context, index) {
-                            if (index == 3) {
-                              // Placeholder + button
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    // Action for adding a new page
-                                  },
-                                  child: const Text('+'),
-                                ),
+                            if (index == pages.length) {
+                              // + Button
+                              return ElevatedButton(
+                                onPressed: () async {
+                                  final newPageTitle = await showDialog<String>(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      String pageTitle = '';
+                                      return AlertDialog(
+                                        title: const Text('Create New Page'),
+                                        content: TextField(
+                                          onChanged: (value) {
+                                            pageTitle = value;
+                                          },
+                                          decoration: const InputDecoration(hintText: 'Enter page title'),
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                            },
+                                            child: const Text('Cancel'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.pop(context, pageTitle);
+                                            },
+                                            child: const Text('Create'),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+
+                                  if (newPageTitle != null && newPageTitle.trim().isNotEmpty) {
+                                    final journalId = widget.items[focusedJournalIndex].id.toString();
+                                    await _addPageToJournal(journalId, newPageTitle.trim());
+                                  }
+                                },
+                                child: const Text('+ Add Page'),
                               );
                             }
+
+                            final page = pages[index];
                             return ListTile(
-                              title: Text('Page ${index + 1}'),
+                              title: Text(page['title']),
                               onTap: () {
-                                // Navigate to the selected page
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => IndivPageView(
-                                      pageTitle: 'Page ${index + 1}',
-                                    ),
+                                    builder: (context) => IndivPageView(pageTitle: page['title']),
                                   ),
                                 );
                               },
