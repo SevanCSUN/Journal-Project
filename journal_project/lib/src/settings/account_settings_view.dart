@@ -60,24 +60,31 @@ class AccountSettingsView extends StatelessWidget {
                   ],
                 ),
               )
-            : const Padding(
-                padding: EdgeInsets.all(16.0),
+            : Padding(
+                padding: const EdgeInsets.all(16.0),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Icon(Icons.error_outline, size: 100, color: Colors.red),
-                    SizedBox(height: 20),
-                    Text(
+                    const Icon(Icons.error_outline, size: 100, color: Colors.red),
+                    const SizedBox(height: 20),
+                    const Text(
                       'You are not logged in.',
                       style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                       textAlign: TextAlign.center,
                     ),
-                    SizedBox(height: 10),
-                    Text(
+                    const SizedBox(height: 10),
+                    const Text(
                       'Please log in to view account settings.',
                       style: TextStyle(fontSize: 16),
                       textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pushReplacementNamed(context, '/');
+                      },
+                      child: const Text('Go to Login'),
                     ),
                   ],
                 ),
