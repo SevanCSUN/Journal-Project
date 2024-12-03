@@ -52,7 +52,9 @@ class AccountSettingsView extends StatelessWidget {
                       title: const Text('Logout'),
                       onTap: () async {
                         await FirebaseAuth.instance.signOut();
-                        Navigator.pushReplacementNamed(context, '/');
+                        if (context.mounted) {
+                          Navigator.pushReplacementNamed(context, '/');
+                        }
                       },
                     ),
                   ],
