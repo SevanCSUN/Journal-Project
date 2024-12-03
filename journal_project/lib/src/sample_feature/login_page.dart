@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:journal_project/src/sample_feature/landing_page.dart';
+import 'package:journal_project/src/sample_feature/create_account_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -21,7 +22,9 @@ class _LoginPageState extends State<LoginPage> {
         email: _emailController.text,
         password: _passwordController.text,
       );
-      Navigator.pushReplacementNamed(context, LandingPage.routeName);
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, LandingPage.routeName);
+      }
     } on FirebaseAuthException {
       setState(() {
         _loginError = 'Login failed. Please check your credentials.';
@@ -72,6 +75,16 @@ class _LoginPageState extends State<LoginPage> {
                 Navigator.pushReplacementNamed(context, LandingPage.routeName);
               },
               child: const Text('Continue as Guest'),
+            ),
+            const SizedBox(height: 16.0), // Space between buttons
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const CreateAccountPage()),
+                );
+              },
+              child: const Text('Create Account'),
             ),
           ],
         ),
