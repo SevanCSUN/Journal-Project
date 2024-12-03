@@ -69,14 +69,19 @@ class MyApp extends StatelessWidget {
           theme: ThemeData(
             primarySwatch: Colors.blue,
             brightness: Brightness.light,
+            appBarTheme: AppBarTheme(
+              backgroundColor: Colors.blue,
+              foregroundColor: Colors.white,
+            ),
           ),
           darkTheme: ThemeData(
             primarySwatch: Colors.blue,
             brightness: Brightness.dark,
             scaffoldBackgroundColor: Colors.grey.shade900,
-            cardColor: Colors.grey.shade800,
+            cardColor: Colors.grey.shade600,
             appBarTheme: AppBarTheme(
               backgroundColor: Colors.grey.shade800,
+              foregroundColor: Colors.grey.shade500,
             ),
             listTileTheme: ListTileThemeData(
               tileColor: Colors.grey.shade700,

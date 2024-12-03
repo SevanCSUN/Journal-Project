@@ -31,7 +31,11 @@ class SettingsView extends StatelessWidget {
               // Read the selected themeMode from the controller
               value: controller.themeMode,
               // Call the updateThemeMode method any time the user selects a theme.
-              onChanged: controller.updateThemeMode,
+              onChanged: (ThemeMode? newThemeMode) {
+                if (newThemeMode != null) {
+                  controller.updateThemeMode(newThemeMode);
+                }
+              },
               items: const [
                 DropdownMenuItem(
                   value: ThemeMode.system,

@@ -53,30 +53,36 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.light(),
-      darkTheme: ThemeData.dark(),
-      home: const LoginPage(),
-      onGenerateRoute: (RouteSettings routeSettings) {
-        switch (routeSettings.name) {
-          case SettingsView.routeName:
-            return MaterialPageRoute<void>(
-              settings: routeSettings,
-              builder: (BuildContext context) => SettingsView(controller: settingsController),
-            );
-          case AccountSettingsView.routeName:
-            return MaterialPageRoute<void>(
-              settings: routeSettings,
-              builder: (BuildContext context) => const AccountSettingsView(),
-            );
-          case '/':
-          default:
-            return MaterialPageRoute<void>(
-              settings: routeSettings,
-              builder: (BuildContext context) => const LandingPage(),
-            );
-        }
+    return AnimatedBuilder(
+      animation: settingsController,
+      builder: (context, child) {
+        return MaterialApp(
+          themeMode: settingsController.themeMode,
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData.light(),
+          darkTheme: ThemeData.dark(),
+          home: const LoginPage(),
+          onGenerateRoute: (RouteSettings routeSettings) {
+            switch (routeSettings.name) {
+              case SettingsView.routeName:
+                return MaterialPageRoute<void>(
+                  settings: routeSettings,
+                  builder: (BuildContext context) => SettingsView(controller: settingsController),
+                );
+              case AccountSettingsView.routeName:
+                return MaterialPageRoute<void>(
+                  settings: routeSettings,
+                  builder: (BuildContext context) => const AccountSettingsView(),
+                );
+              case '/':
+              default:
+                return MaterialPageRoute<void>(
+                  settings: routeSettings,
+                  builder: (BuildContext context) => const LandingPage(),
+                );
+            }
+          },
+        );
       },
     );
   }

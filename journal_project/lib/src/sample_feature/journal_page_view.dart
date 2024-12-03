@@ -112,7 +112,7 @@ class _JournalPageState extends State<JournalPage>
 
   Widget _buildHeader() {
     return Container(
-      color: Colors.white,
+      color: Theme.of(context).appBarTheme.foregroundColor, // Dynamic color
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -140,7 +140,7 @@ class _JournalPageState extends State<JournalPage>
   Widget _buildDaysOfWeekHeader() {
     final daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     return Container(
-      color: Colors.grey[200],
+      color: Theme.of(context).dividerColor, // Dynamic color
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -327,7 +327,7 @@ class _JournalPageState extends State<JournalPage>
               if (index == 0) {
                 // Sticky header
                 return Container(
-                  color: Colors.grey[200],
+                  color: Theme.of(context).dividerColor, // Dynamic color
                   padding: const EdgeInsets.all(8.0),
                   child: Text(
                     entry.key,
