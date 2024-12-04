@@ -5,10 +5,10 @@ class TaskCreationScreen extends StatefulWidget {
   const TaskCreationScreen({super.key});
 
   @override
-  _TaskCreationScreenState createState() => _TaskCreationScreenState();
+  TaskCreationScreenState createState() => TaskCreationScreenState();
 }
 
-class _TaskCreationScreenState extends State<TaskCreationScreen> {
+class TaskCreationScreenState extends State<TaskCreationScreen> {
   // State variables for toggles
   bool _isDueDateEnabled = false;
   bool _isTimeEnabled = false;

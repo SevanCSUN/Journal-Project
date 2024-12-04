@@ -5,10 +5,10 @@ class CreateAccountPage extends StatefulWidget {
   const CreateAccountPage({super.key});
 
   @override
-  _CreateAccountPageState createState() => _CreateAccountPageState();
+  CreateAccountPageState createState() => CreateAccountPageState();
 }
 
-class _CreateAccountPageState extends State<CreateAccountPage> {
+class CreateAccountPageState extends State<CreateAccountPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   String? _errorMessage;

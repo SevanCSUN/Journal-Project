@@ -12,10 +12,10 @@ class IndivPageView extends StatefulWidget {
   static const routeName = '/indiv_page_view';
 
   @override
-  _IndivPageViewState createState() => _IndivPageViewState();
+  IndivPageViewState createState() => IndivPageViewState();
 }
 
-class _IndivPageViewState extends State<IndivPageView> {
+class IndivPageViewState extends State<IndivPageView> {
   late ParchmentDocument document;
   late FleatherController controller;
 

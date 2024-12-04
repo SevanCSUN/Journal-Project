@@ -7,10 +7,10 @@ class JournalPage extends StatefulWidget {
   const JournalPage({super.key, required this.journalName});
 
   @override
-  _JournalPageState createState() => _JournalPageState();
+  JournalPageState createState() => JournalPageState();
 }
 
-class _JournalPageState extends State<JournalPage>
+class JournalPageState extends State<JournalPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool isListView = true; // Toggle between list view and calendar view
