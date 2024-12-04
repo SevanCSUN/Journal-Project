@@ -57,6 +57,14 @@ class AccountSettingsView extends StatelessWidget {
                         }
                       },
                     ),
+                    const Divider(),
+                    ListTile(
+                      leading: const Icon(Icons.delete),
+                      title: const Text('Delete Account'),
+                      onTap: () {
+                        _deleteAccount(context);
+                      },
+                    ),
                   ],
                 ),
               )
@@ -128,6 +136,49 @@ class AccountSettingsView extends StatelessWidget {
                 }
               },
               child: const Text('Change'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _deleteAccount(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete Account'),
+          content: const Text('Are you sure you want to delete your account? This action cannot be undone.'),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                try {
+                  User? user = FirebaseAuth.instance.currentUser;
+                  if (user != null) {
+                    await user.delete();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Account deleted successfully')),
+                      );
+                      Navigator.pushReplacementNamed(context, '/');
+                    }
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to delete account: $e')),
+                    );
+                  }
+                }
+              },
+              child: const Text('Delete'),
             ),
             TextButton(
               onPressed: () {
