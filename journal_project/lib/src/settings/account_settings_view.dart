@@ -43,7 +43,7 @@ class AccountSettingsView extends StatelessWidget {
                       leading: const Icon(Icons.lock),
                       title: const Text('Change Password'),
                       onTap: () {
-                        // Add functionality to change password
+                        _changePassword(context);
                       },
                     ),
                     const Divider(),
@@ -90,6 +90,54 @@ class AccountSettingsView extends StatelessWidget {
                 ),
               ),
       ),
+    );
+  }
+
+  void _changePassword(BuildContext context) {
+    final TextEditingController passwordController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Change Password'),
+          content: TextField(
+            controller: passwordController,
+            decoration: const InputDecoration(hintText: 'Enter new password'),
+            obscureText: true,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                try {
+                  User? user = FirebaseAuth.instance.currentUser;
+                  if (user != null) {
+                    await user.updatePassword(passwordController.text);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Password changed successfully')),
+                      );
+                      Navigator.of(context).pop();
+                    }
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to change password: $e')),
+                    );
+                  }
+                }
+              },
+              child: const Text('Change'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
