@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-//import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class CreateAccountPage extends StatefulWidget {
   const CreateAccountPage({super.key});
@@ -14,10 +14,17 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
   String? _errorMessage;
 
   Future<void> _createAccount() async {
-    // Placeholder for future Firebase implementation
-    setState(() {
-      _errorMessage = 'Create account functionality not implemented yet.';
-    });
+    try {
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+      Navigator.pushReplacementNamed(context, '/'); // Navigate to the home page or login page
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        _errorMessage = e.message;
+      });
+    }
   }
 
   @override
