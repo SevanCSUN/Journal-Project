@@ -19,7 +19,12 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
         email: _emailController.text,
         password: _passwordController.text,
       );
-      Navigator.pushReplacementNamed(context, '/'); // Navigate to the home page or login page
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Account created successfully!')),
+        );
+        Navigator.pushReplacementNamed(context, '/'); // Navigate to the home page or login page
+      }
     } on FirebaseAuthException catch (e) {
       setState(() {
         _errorMessage = e.message;
