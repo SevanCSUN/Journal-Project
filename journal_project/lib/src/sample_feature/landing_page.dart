@@ -1,10 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../settings/settings_view.dart';
 import 'sample_item.dart';
-//import 'page_list_view.dart';
-import 'indiv_page_view.dart'; // Import the PageView
-import 'journal_page_view.dart'; // Import the individual Journal view
-
+import 'indiv_page_view.dart';
+import 'journal_page_view.dart';
 
 class LandingPage extends StatefulWidget {
   const LandingPage({
@@ -16,12 +16,53 @@ class LandingPage extends StatefulWidget {
   final List<SampleItem> items;
 
   @override
-  State<LandingPage> createState() => _LandingPage();
+  State<LandingPage> createState() => _LandingPageState();
 }
 
-class _LandingPage extends State<LandingPage> {
-  int focusedJournalIndex = 0; // Set initial focused journal to the first one
-  bool showPageList = false; // variable for toggling the vertical page list
+class _LandingPageState extends State<LandingPage> {
+  int focusedJournalIndex = 0; // Initial focused journal
+  bool showPageList = false; // Toggle for showing the vertical page list
+  List<Map<String, dynamic>> pages = []; // Store pages for the focused journal
+  bool isLoadingPages = false;
+  List<Map<String, dynamic>> journals = []; // List of journals fetched from Firestore
+  bool isLoadingJournals = true; // Loading indicator for journals
+
+
+  /// Add a new page to the focused journal
+  Future<void> _addPageToJournal(String journalId, String pageTitle) async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      throw Exception('User not authenticated');
+    }
+
+    final pageId = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('journals')
+        .doc(journalId)
+        .collection('pages')
+        .doc()
+        .id;
+
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('journals')
+        .doc(journalId)
+        .collection('pages')
+        .doc(pageId)
+        .set({
+      'title': pageTitle,
+      'content': '',
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    // Add to the local pages list
+    setState(() {
+      pages.add({'title': pageTitle});
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,123 +136,168 @@ class _LandingPage extends State<LandingPage> {
                 ),
               ),
             ),
-            const SizedBox(height: 50), // Just adds space between weekly view and journals view
+            const SizedBox(height: 50), // Space between weekly view and journal list
+
             // Horizontal journal list
             SizedBox(
-              height: 150, // The height of the horizontal list
-              child: PageView.builder(
-                controller: PageController(viewportFraction: 0.35, initialPage: focusedJournalIndex), // viewportFraction for scaling
-                itemCount: widget.items.length + 1, // Add one more item for the placeholder
-                onPageChanged: (index) {
-                  setState(() {
-                    focusedJournalIndex = index;
-                    showPageList = false; // Close the vertical list when swiping to a new journal
-                  });
-                },
-                itemBuilder: (BuildContext context, int index) {
-                  bool isFocused = focusedJournalIndex == index;
+  height: 150, // Height of the horizontal list
+  child: PageView.builder(
+    controller: PageController(viewportFraction: 0.35, initialPage: 0),
+    itemCount: journals.length + 1, // Journals + the fixed leftmost +
+    onPageChanged: (index) {
+      setState(() {
+        focusedJournalIndex = index;
+        showPageList = false; // Close the vertical page list when swiping
+      });
+    },
+    itemBuilder: (BuildContext context, int index) {
+      bool isFocused = focusedJournalIndex == index;
 
-                  if (index == 0) {
-                    // Placeholder for creating a new journal
-                    return Transform.scale(
-                      scale: isFocused ? 1.0 : 0.85, // scaling for the placeholder
-                      child: GestureDetector(
-                        onTap: () {
-                          // Action for creating a new journal
-                        },
-                        child: Container(
-                          margin: const EdgeInsets.all(8.0), // spacing between cards
-                          child: Card(
-                            elevation: 5,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.add, size: 60), // Placeholder icon
-                                SizedBox(height: 10), // Space between icon and text
-                                Text(
-                                  'Create Journal',
-                                  style: TextStyle(fontSize: 14),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }
-
-                  final item = widget.items[index - 1]; // Adjust index for the existing items
-
-                  // Scale effect to show that a journal is focused
-                  return Transform.scale(
-                    scale: isFocused ? 1.0 : 0.85, // scaling for focused journal
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          if (isFocused) {
-                            if (showPageList) {
-                              // If page list is already open, navigate to full list
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => JournalPage(
-                                    journalName: 'Journal ${item.id}'
-                                    ),
-                                  ),
-                              );
-                            } else {
-                              // Toggle the vertical page list
-                              showPageList = true;
-                            }
-                          }
-                        });
+      if (index == 0) {
+        // Fixed + button for creating a new journal
+        return Transform.scale(
+          scale: isFocused ? 1.0 : 0.85, // Scaling effect for focus
+          child: GestureDetector(
+            onTap: () async {
+              // Action for creating a new journal
+              final newJournalTitle = await showDialog<String>(
+                context: context,
+                builder: (BuildContext context) {
+                  String journalTitle = '';
+                  return AlertDialog(
+                    title: const Text('Create New Journal'),
+                    content: TextField(
+                      onChanged: (value) {
+                        journalTitle = value;
                       },
-                      // The container around the journal cards
-                      child: Container(
-                        margin: const EdgeInsets.all(8.0), // spacing between cards
-                        child: Card(
-                          elevation: 5,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                width: 60,
-                                height: 60,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.rectangle,
-                                  borderRadius: BorderRadius.circular(10),
-                                  image: const DecorationImage(
-                                    image: AssetImage('assets/images/placeholder_img.png'),
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 10), // Space between image and text
-                              Text(
-                                'Journal ${item.id}',
-                                style: const TextStyle(fontSize: 14),
-                              ),
-                            ],
-                          ),
-                        ),
+                      decoration: const InputDecoration(hintText: 'Enter journal title'),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context); // Cancel
+                        },
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context, journalTitle); // Return entered title
+                        },
+                        child: const Text('Create'),
+                      ),
+                    ],
+                  );
+                },
+              );
+
+              if (newJournalTitle != null && newJournalTitle.trim().isNotEmpty) {
+                try {
+                  await _createJournal(newJournalTitle.trim());
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Journal "$newJournalTitle" created successfully.')),
+                  );
+                  setState(() {
+                    // Optionally update UI if local state is used
+                  });
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error creating journal: $e')),
+                  );
+                }
+              }
+            },
+            child: Container(
+              margin: const EdgeInsets.all(8.0), // Spacing between cards
+              child: Card(
+                elevation: 5,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.add, size: 60), // + Icon
+                    SizedBox(height: 10), // Space between icon and text
+                    Text(
+                      'Create Journal',
+                      style: TextStyle(fontSize: 14),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      }
+
+      final journal = journals[index - 1]; // Adjust index to skip the + button
+
+      // Scale effect to show focus
+      return Transform.scale(
+        scale: isFocused ? 1.0 : 0.85,
+        child: GestureDetector(
+          onTap: () {
+            setState(() {
+              if (isFocused) {
+                if (showPageList) {
+                  // Navigate to full list of pages
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => JournalPage(
+                        journalName: journal['title'], journalId: '', // Replace with your journal title field
                       ),
                     ),
                   );
-                },
+                } else {
+                  // Toggle vertical page list
+                  showPageList = true;
+                }
+              }
+            });
+          },
+          child: Container(
+            margin: const EdgeInsets.all(8.0), // Spacing between cards
+            child: Card(
+              elevation: 5,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.rectangle,
+                      borderRadius: BorderRadius.circular(10),
+                      image: const DecorationImage(
+                        image: AssetImage('assets/images/placeholder_img.png'),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10), // Space between image and text
+                  Text(
+                    journal['title'] ?? 'Untitled Journal', // Use journal title
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                ],
               ),
             ),
+          ),
+        ),
+      );
+    },
+  ),
+),
 
             // Show the vertical list of pages if showPageList is true and journal is focused
             if (showPageList && focusedJournalIndex != -1)
               Column(
                 children: [
-                  const SizedBox(height: 10), // just adds space between journal cards and page list
+                  const SizedBox(height: 10), // Space between journal cards and page list
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: Container(
@@ -230,32 +316,61 @@ class _LandingPage extends State<LandingPage> {
                       child: Padding(
                         padding: const EdgeInsets.all(8.0), // Add padding inside the container
                         child: ListView.builder(
-                          shrinkWrap: true, // takes only as much space as needed
-                          physics: const NeverScrollableScrollPhysics(), // Disable scrolling for this list
-                          itemCount: 3 + 1, // Number of pages + 1 for the placeholder
+                          shrinkWrap: true, // Takes only as much space as needed
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: pages.length + 1, // Add one for the + button
                           itemBuilder: (context, index) {
-                            if (index == 3) {
-                              // Placeholder + button
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    // Action for adding a new page
-                                  },
-                                  child: const Text('+'),
-                                ),
+                            if (index == pages.length) {
+                              // + Button
+                              return ElevatedButton(
+                                onPressed: () async {
+                                  final newPageTitle = await showDialog<String>(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      String pageTitle = '';
+                                      return AlertDialog(
+                                        title: const Text('Create New Page'),
+                                        content: TextField(
+                                          onChanged: (value) {
+                                            pageTitle = value;
+                                          },
+                                          decoration: const InputDecoration(hintText: 'Enter page title'),
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                            },
+                                            child: const Text('Cancel'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.pop(context, pageTitle);
+                                            },
+                                            child: const Text('Create'),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+
+                                  if (newPageTitle != null && newPageTitle.trim().isNotEmpty) {
+                                    final journalId = widget.items[focusedJournalIndex].id.toString();
+                                    await _addPageToJournal(journalId, newPageTitle.trim());
+                                  }
+                                },
+                                child: const Text('+ Add Page'),
                               );
                             }
+
+                            final page = pages[index];
                             return ListTile(
-                              title: Text('Page ${index + 1}'),
+                              title: Text(page['title']),
                               onTap: () {
-                                // Navigate to the selected page
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => IndivPageView(
-                                      pageTitle: 'Page ${index + 1}',
-                                    ),
+                                    builder: (context) => IndivPageView(pageTitle: page['title']),
                                   ),
                                 );
                               },
@@ -272,4 +387,71 @@ class _LandingPage extends State<LandingPage> {
       ),
     );
   }
-}
+
+/// Fetch journals from Firestore
+  Future<void> _loadJournals() async {
+    setState(() {
+      isLoadingJournals = true;
+    });
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('journals')
+          .get();
+
+      setState(() {
+        journals = querySnapshot.docs.map((doc) {
+          return {
+            'id': doc.id,
+            ...doc.data(),
+          };
+        }).toList();
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading journals: $e')),
+      );
+    } finally {
+      setState(() {
+        isLoadingJournals = false;
+      });
+    }
+  }
+
+  /// Add a new journal to Firestore
+  Future<void> _createJournal(String journalTitle) async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      throw Exception('User not authenticated');
+    }
+
+    final journalId = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('journals')
+        .doc()
+        .id;
+
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('journals')
+        .doc(journalId)
+        .set({
+      'title': journalTitle,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    setState(() {
+      journals.add({'id': journalId, 'title': journalTitle});
+    });
+  }
+  }

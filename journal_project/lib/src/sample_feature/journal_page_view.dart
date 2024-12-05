@@ -1,10 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:intl/intl.dart';
+import 'package:journal_project/src/sample_feature/indiv_page_view.dart';
+import 'package:journal_project/src/sample_feature/journal_manager.dart';
 
 class JournalPage extends StatefulWidget {
   final String journalName;
+  final String journalId; // Added journalId to fetch pages for the specific journal
 
-  const JournalPage({super.key, required this.journalName});
+  const JournalPage({
+    super.key,
+    required this.journalName,
+    required this.journalId,
+  });
 
   @override
   JournalPageState createState() => JournalPageState();
@@ -17,6 +27,8 @@ class JournalPageState extends State<JournalPage>
   late ScrollController _scrollController;
   DateTime _currentMonth = DateTime.now();
   DateTime? _selectedDay; // Store the selected day for the popup
+  List<Map<String, dynamic>> pages = []; // List of pages for the journal
+  bool isLoadingPages = false; // Loading indicator for pages
 
   // Example task data for each day
   final Map<DateTime, List<String>> tasksByDate = {
@@ -24,6 +36,7 @@ class JournalPageState extends State<JournalPage>
     DateTime(2024, 11, 21): ['Task 3'],
     DateTime(2024, 11, 22): ['Task 4', 'Task 5'],
   };
+
 
   @override
   void initState() {
@@ -39,6 +52,30 @@ class JournalPageState extends State<JournalPage>
     _scrollController.dispose();
     super.dispose();
   }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _fetchPages(); // Safe to call here
+  }
+
+  /// Fetch pages from Firestore for the specified journal
+  Future<void> _fetchPages() async {
+  try {
+    final journalId = "exampleJournalId"; // Replace with the correct journal ID
+    final fetchedPages = await JournalManager().fetchPages(journalId);
+    setState(() {
+      pages = fetchedPages;
+    });
+  } catch (e) {
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      // Safely show the SnackBar after the current frame
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to fetch pages: $e')),
+      );
+    });
+  }
+}
 
   void _onScroll() {
     if (_scrollController.hasClients) {
@@ -85,7 +122,7 @@ class JournalPageState extends State<JournalPage>
           body: TabBarView(
             controller: _tabController,
             children: [
-              // Tasks Tab
+              // Tasks Tab (Unchanged)
               Column(
                 children: [
                   _buildHeader(),
@@ -95,12 +132,42 @@ class JournalPageState extends State<JournalPage>
                 ],
               ),
               // Pages Tab
-              Center(
-                child: Text(
-                  'Pages for ${widget.journalName}', // Placeholder for Pages Tab
-                  style: const TextStyle(fontSize: 18),
-                ),
-              ),
+              isLoadingPages
+                  ? const Center(child: CircularProgressIndicator())
+                  : pages.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'No pages found for this journal.',
+                            style: TextStyle(fontSize: 16, color: Colors.grey),
+                          ),
+                        )
+                      : ListView.builder(
+                          itemCount: pages.length,
+                          itemBuilder: (context, index) {
+                            final page = pages[index];
+                            return ListTile(
+                              title: Text(page['title'] ?? 'Untitled Page'),
+                              subtitle: Text(
+                                page['createdAt'] != null
+                                    ? DateFormat('MMM dd, yyyy').format(
+                                        (page['createdAt'] as Timestamp)
+                                            .toDate(),
+                                      )
+                                    : 'No date available',
+                              ),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => IndivPageView(
+                                      pageTitle: page['title'] ?? 'Untitled Page',
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
             ],
           ),
         ),
