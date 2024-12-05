@@ -48,8 +48,8 @@ class DefaultFirebaseOptions {
     storageBucket: "journal-project-comp585-fa2024.firebasestorage.app",
     messagingSenderId: "715827816927",
     appId: "1:715827816927:web:389737f8722470b2fcbc6a",
-    iosClientId: "YOUR_IOS_CLIENT_ID",
-    iosBundleId: "YOUR_IOS_BUNDLE_ID",
+    //iosClientId: "YOUR_IOS_CLIENT_ID",
+    iosBundleId: "com.example.journal_project_comp585_fa2024",
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -59,8 +59,8 @@ class DefaultFirebaseOptions {
     storageBucket: "journal-project-comp585-fa2024.firebasestorage.app",
     messagingSenderId: "715827816927",
     appId: "1:715827816927:web:389737f8722470b2fcbc6a",
-    iosClientId: "YOUR_IOS_CLIENT_ID",
-    iosBundleId: "YOUR_IOS_BUNDLE_ID",
+    //iosClientId: "YOUR_IOS_CLIENT_ID",
+    iosBundleId: "com.example.journal_project_comp585_fa2024",
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
