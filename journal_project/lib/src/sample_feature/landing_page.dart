@@ -27,41 +27,84 @@ class _LandingPageState extends State<LandingPage> {
   List<Map<String, dynamic>> journals = []; // List of journals fetched from Firestore
   bool isLoadingJournals = true; // Loading indicator for journals
 
+  @override
+  void initState() {
+    super.initState();
+    _loadJournals();
+  }
 
-  /// Add a new page to the focused journal
-  Future<void> _addPageToJournal(String journalId, String pageTitle) async {
-    final user = FirebaseAuth.instance.currentUser;
-
-    if (user == null) {
-      throw Exception('User not authenticated');
-    }
-
-    final pageId = FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .collection('journals')
-        .doc(journalId)
-        .collection('pages')
-        .doc()
-        .id;
-
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .collection('journals')
-        .doc(journalId)
-        .collection('pages')
-        .doc(pageId)
-        .set({
-      'title': pageTitle,
-      'content': '',
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-
-    // Add to the local pages list
+  Future<void> _loadJournals() async {
     setState(() {
-      pages.add({'title': pageTitle});
+      isLoadingJournals = true;
     });
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('journals')
+          .get();
+
+      setState(() {
+        journals = querySnapshot.docs.map((doc) {
+          return {
+            'id': doc.id,
+            ...doc.data(),
+          };
+        }).toList();
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading journals: $e')),
+      );
+    } finally {
+      setState(() {
+        isLoadingJournals = false;
+      });
+    }
+  }
+
+  Future<void> _fetchPages(String journalId) async {
+    setState(() {
+      isLoadingPages = true;
+    });
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('journals')
+          .doc(journalId)
+          .collection('pages')
+          .get();
+
+      setState(() {
+        pages = querySnapshot.docs.map((doc) {
+          return {
+            'id': doc.id,
+            ...doc.data(),
+          };
+        }).toList();
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading pages: $e')),
+      );
+    } finally {
+      setState(() {
+        isLoadingPages = false;
+      });
+    }
   }
 
   @override
@@ -140,158 +183,160 @@ class _LandingPageState extends State<LandingPage> {
 
             // Horizontal journal list
             SizedBox(
-  height: 150, // Height of the horizontal list
-  child: PageView.builder(
-    controller: PageController(viewportFraction: 0.35, initialPage: 0),
-    itemCount: journals.length + 1, // Journals + the fixed leftmost +
-    onPageChanged: (index) {
-      setState(() {
-        focusedJournalIndex = index;
-        showPageList = false; // Close the vertical page list when swiping
-      });
-    },
-    itemBuilder: (BuildContext context, int index) {
-      bool isFocused = focusedJournalIndex == index;
+              height: 150, // Height of the horizontal list
+              child: PageView.builder(
+                controller: PageController(viewportFraction: 0.35, initialPage: 0),
+                itemCount: journals.length + 1, // Journals + the fixed leftmost +
+                onPageChanged: (index) {
+                  setState(() {
+                    focusedJournalIndex = index;
+                    showPageList = false; // Close the vertical page list when swiping
+                  });
+                },
+                itemBuilder: (BuildContext context, int index) {
+                  bool isFocused = focusedJournalIndex == index;
 
-      if (index == 0) {
-        // Fixed + button for creating a new journal
-        return Transform.scale(
-          scale: isFocused ? 1.0 : 0.85, // Scaling effect for focus
-          child: GestureDetector(
-            onTap: () async {
-              // Action for creating a new journal
-              final newJournalTitle = await showDialog<String>(
-                context: context,
-                builder: (BuildContext context) {
-                  String journalTitle = '';
-                  return AlertDialog(
-                    title: const Text('Create New Journal'),
-                    content: TextField(
-                      onChanged: (value) {
-                        journalTitle = value;
+                  if (index == 0) {
+                    // Fixed + button for creating a new journal
+                    return Transform.scale(
+                      scale: isFocused ? 1.0 : 0.85, // Scaling effect for focus
+                      child: GestureDetector(
+                        onTap: () async {
+                          // Action for creating a new journal
+                          final newJournalTitle = await showDialog<String>(
+                            context: context,
+                            builder: (BuildContext context) {
+                              String journalTitle = '';
+                              return AlertDialog(
+                                title: const Text('Create New Journal'),
+                                content: TextField(
+                                  onChanged: (value) {
+                                    journalTitle = value;
+                                  },
+                                  decoration: const InputDecoration(hintText: 'Enter journal title'),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context); // Cancel
+                                    },
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context, journalTitle); // Return entered title
+                                    },
+                                    child: const Text('Create'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+
+                          if (newJournalTitle != null && newJournalTitle.trim().isNotEmpty) {
+                            try {
+                              await _createJournal(newJournalTitle.trim());
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Journal "$newJournalTitle" created successfully.')),
+                              );
+                              setState(() {
+                                // Optionally update UI if local state is used
+                              });
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Error creating journal: $e')),
+                              );
+                            }
+                          }
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.all(8.0), // Spacing between cards
+                          child: Card(
+                            elevation: 5,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.add, size: 60), // + Icon
+                                SizedBox(height: 10), // Space between icon and text
+                                Text(
+                                  'Create Journal',
+                                  style: TextStyle(fontSize: 14),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
+                  final journal = journals[index - 1]; // Adjust index to skip the + button
+
+                  // Scale effect to show focus
+                  return Transform.scale(
+                    scale: isFocused ? 1.0 : 0.85,
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          if (isFocused) {
+                            if (showPageList) {
+                              // Navigate to full list of pages
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => JournalPage(
+                                    journalName: journal['title'],
+                                    journalId: journal['id'],
+                                  ),
+                                ),
+                              );
+                            } else {
+                              // Toggle vertical page list
+                              showPageList = true;
+                              _fetchPages(journal['id']);
+                            }
+                          }
+                        });
                       },
-                      decoration: const InputDecoration(hintText: 'Enter journal title'),
+                      child: Container(
+                        margin: const EdgeInsets.all(8.0), // Spacing between cards
+                        child: Card(
+                          elevation: 5,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 60,
+                                height: 60,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.rectangle,
+                                  borderRadius: BorderRadius.circular(10),
+                                  image: const DecorationImage(
+                                    image: AssetImage('assets/images/placeholder_img.png'),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 10), // Space between image and text
+                              Text(
+                                journal['title'] ?? 'Untitled Journal', // Use journal title
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
-                    actions: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(context); // Cancel
-                        },
-                        child: const Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(context, journalTitle); // Return entered title
-                        },
-                        child: const Text('Create'),
-                      ),
-                    ],
                   );
                 },
-              );
-
-              if (newJournalTitle != null && newJournalTitle.trim().isNotEmpty) {
-                try {
-                  await _createJournal(newJournalTitle.trim());
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Journal "$newJournalTitle" created successfully.')),
-                  );
-                  setState(() {
-                    // Optionally update UI if local state is used
-                  });
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error creating journal: $e')),
-                  );
-                }
-              }
-            },
-            child: Container(
-              margin: const EdgeInsets.all(8.0), // Spacing between cards
-              child: Card(
-                elevation: 5,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.add, size: 60), // + Icon
-                    SizedBox(height: 10), // Space between icon and text
-                    Text(
-                      'Create Journal',
-                      style: TextStyle(fontSize: 14),
-                    ),
-                  ],
-                ),
               ),
             ),
-          ),
-        );
-      }
-
-      final journal = journals[index - 1]; // Adjust index to skip the + button
-
-      // Scale effect to show focus
-      return Transform.scale(
-        scale: isFocused ? 1.0 : 0.85,
-        child: GestureDetector(
-          onTap: () {
-            setState(() {
-              if (isFocused) {
-                if (showPageList) {
-                  // Navigate to full list of pages
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => JournalPage(
-                        journalName: journal['title'], journalId: '', // Replace with your journal title field
-                      ),
-                    ),
-                  );
-                } else {
-                  // Toggle vertical page list
-                  showPageList = true;
-                }
-              }
-            });
-          },
-          child: Container(
-            margin: const EdgeInsets.all(8.0), // Spacing between cards
-            child: Card(
-              elevation: 5,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.rectangle,
-                      borderRadius: BorderRadius.circular(10),
-                      image: const DecorationImage(
-                        image: AssetImage('assets/images/placeholder_img.png'),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10), // Space between image and text
-                  Text(
-                    journal['title'] ?? 'Untitled Journal', // Use journal title
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
-    },
-  ),
-),
 
             // Show the vertical list of pages if showPageList is true and journal is focused
             if (showPageList && focusedJournalIndex != -1)
@@ -355,7 +400,7 @@ class _LandingPageState extends State<LandingPage> {
                                   );
 
                                   if (newPageTitle != null && newPageTitle.trim().isNotEmpty) {
-                                    final journalId = widget.items[focusedJournalIndex].id.toString();
+                                    final journalId = journals[focusedJournalIndex - 1]['id'];
                                     await _addPageToJournal(journalId, newPageTitle.trim());
                                   }
                                 },
@@ -388,44 +433,6 @@ class _LandingPageState extends State<LandingPage> {
     );
   }
 
-/// Fetch journals from Firestore
-  Future<void> _loadJournals() async {
-    setState(() {
-      isLoadingJournals = true;
-    });
-
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
-        throw Exception('User not authenticated');
-      }
-
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .collection('journals')
-          .get();
-
-      setState(() {
-        journals = querySnapshot.docs.map((doc) {
-          return {
-            'id': doc.id,
-            ...doc.data(),
-          };
-        }).toList();
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading journals: $e')),
-      );
-    } finally {
-      setState(() {
-        isLoadingJournals = false;
-      });
-    }
-  }
-
-  /// Add a new journal to Firestore
   Future<void> _createJournal(String journalTitle) async {
     final user = FirebaseAuth.instance.currentUser;
 
@@ -454,4 +461,39 @@ class _LandingPageState extends State<LandingPage> {
       journals.add({'id': journalId, 'title': journalTitle});
     });
   }
+
+  Future<void> _addPageToJournal(String journalId, String pageTitle) async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      throw Exception('User not authenticated');
+    }
+
+    final pageId = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('journals')
+        .doc(journalId)
+        .collection('pages')
+        .doc()
+        .id;
+
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('journals')
+        .doc(journalId)
+        .collection('pages')
+        .doc(pageId)
+        .set({
+      'title': pageTitle,
+      'content': '',
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    // Add to the local pages list
+    setState(() {
+      pages.add({'id': pageId, 'title': pageTitle});
+    });
   }
+}
