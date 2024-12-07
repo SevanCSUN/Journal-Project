@@ -27,6 +27,50 @@ class _LandingPageState extends State<LandingPage> {
   List<Map<String, dynamic>> journals = []; // List of journals fetched from Firestore
   bool isLoadingJournals = true; // Loading indicator for journals
 
+  @override
+  void initState() {
+    super.initState();
+    _loadJournals();
+  }
+
+  // Fetch pages for a specific journal
+  Future<void> _loadPages(String journalId) async {
+    setState(() {
+      isLoadingPages = true;
+    });
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('journals')
+          .doc(journalId)
+          .collection('pages')
+          .get();
+
+      setState(() {
+        pages = querySnapshot.docs.map((doc) {
+          return {
+            'id': doc.id,
+            ...doc.data(),
+          };
+        }).toList();
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading pages: $e')),
+      );
+    } finally {
+      setState(() {
+        isLoadingPages = false;
+      });
+    }
+  }
 
   /// Add a new page to the focused journal
   Future<void> _addPageToJournal(String journalId, String pageTitle) async {
@@ -144,11 +188,14 @@ class _LandingPageState extends State<LandingPage> {
   child: PageView.builder(
     controller: PageController(viewportFraction: 0.35, initialPage: 0),
     itemCount: journals.length + 1, // Journals + the fixed leftmost +
-    onPageChanged: (index) {
+    onPageChanged: (index) async {
       setState(() {
         focusedJournalIndex = index;
         showPageList = false; // Close the vertical page list when swiping
       });
+      if (index > 0) {
+        await _loadPages(journals[index - 1]['id']);
+      }
     },
     itemBuilder: (BuildContext context, int index) {
       bool isFocused = focusedJournalIndex == index;
@@ -454,4 +501,4 @@ class _LandingPageState extends State<LandingPage> {
       journals.add({'id': journalId, 'title': journalTitle});
     });
   }
-  }
+}
