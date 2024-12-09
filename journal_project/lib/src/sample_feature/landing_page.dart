@@ -49,6 +49,28 @@ class _LandingPageState extends State<LandingPage> {
     }
   }
 
+  /// Fetch pages for the selected journal
+  Future<void> _loadPages(String journalId) async {
+    setState(() {
+      isLoadingPages = true;
+    });
+
+    try {
+      final fetchedPages = await _journalManager.fetchPages(journalId);
+      setState(() {
+        pages = fetchedPages;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading pages: $e')),
+      );
+    } finally {
+      setState(() {
+        isLoadingPages = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -131,11 +153,15 @@ class _LandingPageState extends State<LandingPage> {
                   : PageView.builder(
                       controller: PageController(viewportFraction: 0.35, initialPage: 0),
                       itemCount: journals.length + 1, // Journals + the fixed leftmost +
-                      onPageChanged: (index) {
+                      onPageChanged: (index) async {
                         setState(() {
                           focusedJournalIndex = index;
                           showPageList = false; // Close the vertical page list when swiping
                         });
+                        if (index > 0) {
+                          final journalId = journals[index - 1]['id'];
+                          await _loadPages(journalId); // Load pages for the focused journal
+                        }
                       },
                       itemBuilder: (BuildContext context, int index) {
                         bool isFocused = focusedJournalIndex == index;
@@ -226,20 +252,7 @@ class _LandingPageState extends State<LandingPage> {
                             onTap: () {
                               setState(() {
                                 if (isFocused) {
-                                  if (showPageList) {
-                                    // Navigate to full list of pages
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => JournalPage(
-                                          journalName: journal['title'], journalId: journal['id'], // Use journal ID
-                                        ),
-                                      ),
-                                    );
-                                  } else {
-                                    // Toggle vertical page list
-                                    showPageList = true;
-                                  }
+                                  showPageList = !showPageList; // Toggle vertical page list
                                 }
                               });
                             },
