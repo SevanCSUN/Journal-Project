@@ -5,6 +5,7 @@ import '../settings/settings_view.dart';
 import 'sample_item.dart';
 import 'indiv_page_view.dart';
 import 'journal_page_view.dart';
+import 'journal_manager.dart';
 
 class LandingPage extends StatefulWidget {
   const LandingPage({
@@ -26,42 +27,20 @@ class _LandingPageState extends State<LandingPage> {
   bool isLoadingPages = false;
   List<Map<String, dynamic>> journals = []; // List of journals fetched from Firestore
   bool isLoadingJournals = true; // Loading indicator for journals
-
+  final JournalManager _journalManager = JournalManager();
 
   /// Add a new page to the focused journal
   Future<void> _addPageToJournal(String journalId, String pageTitle) async {
-    final user = FirebaseAuth.instance.currentUser;
-
-    if (user == null) {
-      throw Exception('User not authenticated');
+    try {
+      await _journalManager.addPage(journalId, pageTitle, '');
+      setState(() {
+        pages.add({'title': pageTitle});
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error adding page: $e')),
+      );
     }
-
-    final pageId = FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .collection('journals')
-        .doc(journalId)
-        .collection('pages')
-        .doc()
-        .id;
-
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .collection('journals')
-        .doc(journalId)
-        .collection('pages')
-        .doc(pageId)
-        .set({
-      'title': pageTitle,
-      'content': '',
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-
-    // Add to the local pages list
-    setState(() {
-      pages.add({'title': pageTitle});
-    });
   }
 
   @override
@@ -355,7 +334,7 @@ class _LandingPageState extends State<LandingPage> {
                                   );
 
                                   if (newPageTitle != null && newPageTitle.trim().isNotEmpty) {
-                                    final journalId = widget.items[focusedJournalIndex].id.toString();
+                                    final journalId = journals[focusedJournalIndex - 1]['id']; // Get the correct journal ID
                                     await _addPageToJournal(journalId, newPageTitle.trim());
                                   }
                                 },
