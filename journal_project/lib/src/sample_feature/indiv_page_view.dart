@@ -104,72 +104,6 @@ class IndivPageViewState extends State<IndivPageView> {
     }
   }
 
-  Future<void> _confirmDeletePage() async {
-  final userConfirmed = await showDialog<bool>(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: const Text('Delete Page'),
-        content: const Text('Are you sure you want to delete this page? This action cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context, false); // User cancels the deletion
-            },
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context, true); // User confirms the deletion
-            },
-            child: const Text('Delete'),
-          ),
-        ],
-      );
-    },
-  );
-
-  if (userConfirmed == true) {
-    _deletePage();
-  }
-}
-
-Future<void> _deletePage() async {
-  final user = _auth.currentUser;
-  if (user == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('User not authenticated')),
-    );
-    return;
-  }
-
-  try {
-    // Reference to the page document
-    final docRef = _firestore
-        .collection('users')
-        .doc(user.uid)
-        .collection('journals')
-        .doc(widget.journalId)
-        .collection('pages')
-        .doc(widget.pageId);
-
-    // Delete the document
-    await docRef.delete();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Page deleted successfully.')),
-    );
-
-    // Navigate back to the previous screen
-    Navigator.pop(context);
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to delete page: $e')),
-    );
-  }
-}
-
-
   Future<void> _saveDocument() async {
   final user = _auth.currentUser;
   if (user == null) {
@@ -236,14 +170,9 @@ Future<void> _deletePage() async {
         title: Text(pageTitle),
         actions: [
           IconButton(
-          icon: const Icon(Icons.delete),
-          onPressed: _confirmDeletePage, // Call the delete confirmation method
-          ),
-          IconButton(
             icon: const Icon(Icons.save),
             onPressed: _saveDocument,
           ),
-          
         ],
       ),
       body: Column(
@@ -260,5 +189,3 @@ Future<void> _deletePage() async {
     );
   }
 }
-
-

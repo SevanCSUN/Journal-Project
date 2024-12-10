@@ -203,16 +203,15 @@ Future<void> _addPageToJournal(String journalId, String pageTitle) async {
                       controller: PageController(viewportFraction: 0.35, initialPage: 0),
                       itemCount: journals.length + 1, // Journals + the fixed leftmost +
                       onPageChanged: (index) async {
-  setState(() {
-    focusedJournalIndex = index;
-    showPageList = false; // Close the vertical page list when swiping journals
-  });
-  if (index > 0) {
-    final journalId = journals[index - 1]['id'];
-    await _loadPages(journalId); // Load pages for the focused journal
-  }
-},
-
+                        setState(() {
+                          focusedJournalIndex = index;
+                          showPageList = false; // Close the vertical page list when swiping
+                        });
+                        if (index > 0) {
+                          final journalId = journals[index - 1]['id'];
+                          await _loadPages(journalId); // Load pages for the focused journal
+                        }
+                      },
                       itemBuilder: (BuildContext context, int index) {
                         bool isFocused = focusedJournalIndex == index;
 
@@ -300,27 +299,12 @@ Future<void> _addPageToJournal(String journalId, String pageTitle) async {
                           scale: isFocused ? 1.0 : 0.85,
                           child: GestureDetector(
                             onTap: () {
-  setState(() {
-    if (isFocused) {
-      if (showPageList) {
-        // If page list is already visible, navigate to the JournalPage
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => JournalPage(
-              journalName: journal['title'] ?? 'Untitled Journal',
-              journalId: journal['id'],
-            ),
-          ),
-        );
-      } else {
-        // Toggle the vertical page list visibility
-        showPageList = true;
-      }
-    }
-  });
-},
-
+                              setState(() {
+                                if (isFocused) {
+                                  showPageList = !showPageList; // Toggle vertical page list
+                                }
+                              });
+                            },
                             child: Container(
                               margin: const EdgeInsets.all(8.0), // Spacing between cards
                               child: Card(
@@ -431,27 +415,16 @@ Future<void> _addPageToJournal(String journalId, String pageTitle) async {
                             final page = pages[index];
                             return ListTile(
                               title: Text(page['title']),
-                              onTap: () async {
-  final journalId = journals[index - 1]['id'];
-  final journalName = journals[index - 1]['title'] ?? 'Untitled Journal';
-
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => JournalPage(
-        journalName: journalName,
-        journalId: journalId,
-      ),
-    ),
-  ).then((_) async {
-    await _loadPages(journalId); // Refresh page list after returning
-    setState(() {
-      focusedJournalIndex = index;
-      showPageList = true; // Show page list again
-    });
-  });
-},
-
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => IndivPageView(
+                                      pageId: page['id'], 
+                                      journalId: journals[focusedJournalIndex - 1]['id']),
+                                  ),
+                                );
+                              },
                             );
                           },
                         ),
