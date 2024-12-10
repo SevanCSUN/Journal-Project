@@ -32,12 +32,12 @@ class AccountSettingsView extends StatelessWidget {
                     ListTile(
                       leading: const Icon(Icons.person),
                       title: Text(user.email ?? 'No email'),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.edit),
-                        onPressed: () {
-                          // Add functionality to edit username
-                        },
-                      ),
+                      // trailing: IconButton(
+                      //   icon: const Icon(Icons.edit),
+                      //   onPressed: () {
+                      //     // Add functionality to edit username
+                      //   },
+                      // ),
                     ),
                     const Divider(),
                     ListTile(
