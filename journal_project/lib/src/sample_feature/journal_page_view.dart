@@ -54,15 +54,16 @@ class JournalPageState extends State<JournalPage>
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _fetchPages(); // Safe to call here
-  }
+void didChangeDependencies() {
+  super.didChangeDependencies();
+  final journalId = widget.journalId; // Retrieve journalId from the widget
+  _fetchPages(journalId); // Pass the journalId to _fetchPages
+}
+
 
   /// Fetch pages from Firestore for the specified journal
-  Future<void> _fetchPages() async {
+  Future<void> _fetchPages(String journalId) async {
   try {
-    final journalId = "exampleJournalId"; // Replace with the correct journal ID
     final fetchedPages = await JournalManager().fetchPages(journalId);
     setState(() {
       pages = fetchedPages;
@@ -76,6 +77,7 @@ class JournalPageState extends State<JournalPage>
     });
   }
 }
+
 
   void _onScroll() {
     if (_scrollController.hasClients) {
@@ -160,7 +162,7 @@ class JournalPageState extends State<JournalPage>
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => IndivPageView(
-                                      pageTitle: page['title'] ?? 'Untitled Page',
+                                      pageTitle: page['title'] ?? 'Untitled Page', journalId: '',
                                     ),
                                   ),
                                 );

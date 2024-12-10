@@ -34,7 +34,7 @@ class PageListView extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => IndivPageView(pageTitle: page),
+                  builder: (context) => IndivPageView(pageTitle: page, journalId: '',),
                 ),
               );
             },

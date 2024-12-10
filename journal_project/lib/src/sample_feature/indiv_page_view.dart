@@ -7,9 +7,11 @@ class IndivPageView extends StatefulWidget {
   const IndivPageView({
     super.key,
     required this.pageTitle,
+    required this.journalId, // Add journalId
   });
 
   final String pageTitle;
+  final String journalId; // Journal ID to determine where to save the page
 
   static const routeName = '/indiv_page_view';
 
@@ -33,89 +35,89 @@ class IndivPageViewState extends State<IndivPageView> {
   }
 
   Future<void> _loadDocument() async {
-  final user = FirebaseAuth.instance.currentUser;
+    final user = _auth.currentUser;
 
-  if (user == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('User not authenticated')),
-    );
-    return;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User not authenticated')),
+      );
+      return;
+    }
+
+    try {
+      final docRef = _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('journals')
+          .doc(widget.journalId)
+          .collection('pages')
+          .doc(widget.pageTitle);
+
+      final snapshot = await docRef.get();
+
+      if (snapshot.exists) {
+        final data = snapshot.data();
+        if (data != null && data['content'] != null) {
+          setState(() {
+            document = ParchmentDocument.fromJson(data['content']);
+            controller = FleatherController(document: document);
+          });
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load document: $e')),
+      );
+    }
   }
 
-  try {
-    final docRef = FirebaseFirestore.instance
+  Future<void> _saveDocument() async {
+    final user = _auth.currentUser;
+
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User not authenticated')),
+      );
+      return;
+    }
+
+    final docRef = _firestore
         .collection('users')
         .doc(user.uid)
-        .collection('markdownFiles')
+        .collection('journals')
+        .doc(widget.journalId)
+        .collection('pages')
         .doc(widget.pageTitle);
 
-    final snapshot = await docRef.get();
+    try {
+      final snapshot = await docRef.get();
 
-    if (snapshot.exists) {
-      final data = snapshot.data();
-      if (data != null && data['content'] != null) {
-        // Convert the JSON back into a ParchmentDocument
-        setState(() {
-          document = ParchmentDocument.fromJson(data['content']);
-          controller = FleatherController(document: document);
+      if (snapshot.exists) {
+        // Update existing document
+        await docRef.update({
+          'content': document.toJson(),
+          'updatedAt': FieldValue.serverTimestamp(),
         });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Document updated successfully!')),
+        );
+      } else {
+        // Create a new document
+        await docRef.set({
+          'content': document.toJson(),
+          'updatedAt': FieldValue.serverTimestamp(),
+          'title': widget.pageTitle,
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Document created successfully!')),
+        );
       }
-    }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to load document: $e')),
-    );
-  }
-}
-
-  // Save the document to Firestore
-  Future<void> _saveDocument() async {
-  final user = FirebaseAuth.instance.currentUser;
-
-  if (user == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('User not authenticated')),
-    );
-    return;
-  }
-
-  final docRef = FirebaseFirestore.instance
-      .collection('users')
-      .doc(user.uid)
-      .collection('markdownFiles')
-      .doc(widget.pageTitle);
-
-  try {
-    // Check if the document exists
-    final snapshot = await docRef.get();
-
-    if (snapshot.exists) {
-      // Document exists - update it
-      await docRef.update({
-        'content': document.toJson(), // Save JSON content
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Document updated successfully!')),
-      );
-    } else {
-      // Document does not exist - create it
-      await docRef.set({
-        'content': document.toJson(), // Save JSON content
-        'updatedAt': FieldValue.serverTimestamp(),
-        'title': widget.pageTitle,
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Document created successfully!')),
+        SnackBar(content: Text('Failed to save document: $e')),
       );
     }
-  } catch (e) {
-    // Handle errors
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to save document: $e')),
-    );
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -124,8 +126,8 @@ class IndivPageViewState extends State<IndivPageView> {
         title: Text(widget.pageTitle),
         actions: [
           IconButton(
-            icon: Icon(Icons.save),
-            onPressed: _saveDocument, // Save document when save button is pressed
+            icon: const Icon(Icons.save),
+            onPressed: _saveDocument,
           ),
         ],
       ),

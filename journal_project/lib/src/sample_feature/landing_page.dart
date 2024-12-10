@@ -370,7 +370,7 @@ class _LandingPageState extends State<LandingPage> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => IndivPageView(pageTitle: page['title']),
+                                    builder: (context) => IndivPageView(pageTitle: page['title'], journalId: journals[focusedJournalIndex - 1]['id'],),
                                   ),
                                 );
                               },
