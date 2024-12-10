@@ -36,40 +36,89 @@ class _LandingPageState extends State<LandingPage> {
   }
 
   /// Add a new page to the focused journal
-  Future<void> _addPageToJournal(String journalId, String pageTitle) async {
-    try {
-      await _journalManager.addPage(journalId, pageTitle, '');
-      setState(() {
-        pages.add({'title': pageTitle});
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error adding page: $e')),
-      );
-    }
-  }
+Future<void> _addPageToJournal(String journalId, String pageTitle) async {
+  try {
+    // Generate a unique page ID
+    final pageId = FirebaseFirestore.instance
+        .collection('users')
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .collection('journals')
+        .doc(journalId)
+        .collection('pages')
+        .doc()
+        .id;
 
-  /// Fetch pages for the selected journal
-  Future<void> _loadPages(String journalId) async {
-    setState(() {
-      isLoadingPages = true;
+    // Add the page to Firestore
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .collection('journals')
+        .doc(journalId)
+        .collection('pages')
+        .doc(pageId)
+        .set({
+      'id': pageId,
+      'title': pageTitle,
+      'content': [], // Default empty content
+      'createdAt': FieldValue.serverTimestamp(),
     });
 
-    try {
-      final fetchedPages = await _journalManager.fetchPages(journalId);
-      setState(() {
-        pages = fetchedPages;
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading pages: $e')),
-      );
-    } finally {
-      setState(() {
-        isLoadingPages = false;
-      });
-    }
+    // Update the local state
+    setState(() {
+      pages.add({'id': pageId, 'title': pageTitle});
+    });
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error adding page: $e')),
+    );
   }
+}
+
+
+  Future<void> _loadPages(String journalId) async {
+  try {
+    // Get the current authenticated user
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User not authenticated')),
+      );
+      return;
+    }
+
+    // Fetch pages from Firestore
+    final snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('journals')
+        .doc(journalId)
+        .collection('pages')
+        .orderBy('createdAt', descending: true) // Optional: Order by creation time
+        .get();
+
+    // Map the fetched data into a list of pages
+    final fetchedPages = snapshot.docs.map((doc) {
+      return {
+        'id': doc.id, // Page ID
+        'title': doc['title'] ?? 'Untitled Page', // Page Title
+        'createdAt': doc['createdAt'], // Include timestamp for display or sorting
+      };
+    }).toList();
+
+    // Update the state with the fetched pages
+    setState(() {
+      pages = fetchedPages;
+    });
+  } catch (e) {
+    // Handle errors gracefully
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Failed to fetch pages: $e')),
+    );
+  }
+}
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -370,7 +419,9 @@ class _LandingPageState extends State<LandingPage> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => IndivPageView(pageTitle: page['title']),
+                                    builder: (context) => IndivPageView(
+                                      pageId: page['id'], 
+                                      journalId: journals[focusedJournalIndex - 1]['id']),
                                   ),
                                 );
                               },

@@ -160,7 +160,8 @@ class JournalPageState extends State<JournalPage>
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => IndivPageView(
-                                      pageTitle: page['title'] ?? 'Untitled Page',
+                                      pageId: page['id'], // Pass the page ID
+                                      journalId: widget.journalId,
                                     ),
                                   ),
                                 );

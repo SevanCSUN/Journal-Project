@@ -21,25 +21,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Glue the SettingsController to the MaterialApp.
-    //
-    // The ListenableBuilder Widget listens to the SettingsController for changes.
-    // Whenever the user updates their settings, the MaterialApp is rebuilt.
     return ListenableBuilder(
       listenable: settingsController,
       builder: (BuildContext context, Widget? child) {
         return MaterialApp(
-
-          //the below 3 lines are needed for device preview. remove them when ready to push
-
-
-          //useInheritedMediaQuery: true, // this is deprecated
+          // The below lines are for device preview. Remove them when ready to push.
           locale: DevicePreview.locale(context),
           builder: DevicePreview.appBuilder,
-          // Providing a restorationScopeId allows the Navigator built by the
-          // MaterialApp to restore the navigation stack when a user leaves and
-          // returns to the app after it has been killed while running in the
-          // background.
+
           restorationScopeId: 'app',
 
           // Provide the generated AppLocalizations to the MaterialApp. This
@@ -69,7 +58,7 @@ class MyApp extends StatelessWidget {
           theme: ThemeData(
             primarySwatch: Colors.blue,
             brightness: Brightness.light,
-            appBarTheme: AppBarTheme(
+            appBarTheme: const AppBarTheme(
               backgroundColor: Colors.blue,
               foregroundColor: Colors.white,
             ),
@@ -97,14 +86,20 @@ class MyApp extends StatelessWidget {
               case SettingsView.routeName:
                 return MaterialPageRoute<void>(
                   settings: routeSettings,
-                  builder: (BuildContext context) => SettingsView(controller: settingsController),
+                  builder: (BuildContext context) =>
+                      SettingsView(controller: settingsController),
                 );
               case IndivPageView.routeName:
-                // Extract arguments and cast them to the expected type
-                final String pageTitle = routeSettings.arguments as String; // Get the pageTitle from arguments
+                // Extract arguments for IndivPageView
+                final args = routeSettings.arguments as Map<String, String>;
+                final String pageId = args['pageId']!;
+                final String journalId = args['journalId']!;
                 return MaterialPageRoute<void>(
                   settings: routeSettings,
-                  builder: (BuildContext context) => IndivPageView(pageTitle: pageTitle),
+                  builder: (BuildContext context) => IndivPageView(
+                    pageId: pageId,
+                    journalId: journalId,
+                  ),
                 );
               case '/login':
                 return MaterialPageRoute<void>(
@@ -120,8 +115,10 @@ class MyApp extends StatelessWidget {
             }
           },
           routes: {
-            SettingsView.routeName: (context) => SettingsView(controller: settingsController),
-            AccountSettingsView.routeName: (context) => const AccountSettingsView(),
+            SettingsView.routeName: (context) =>
+                SettingsView(controller: settingsController),
+            AccountSettingsView.routeName: (context) =>
+                const AccountSettingsView(),
           },
         );
       },
