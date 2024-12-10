@@ -3,9 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../settings/settings_view.dart';
 import 'sample_item.dart';
-import 'indiv_page_view.dart';
 import 'journal_page_view.dart';
 import 'journal_manager.dart';
+import 'indiv_page_view.dart';
 
 class LandingPage extends StatefulWidget {
   const LandingPage({
@@ -432,26 +432,25 @@ Future<void> _addPageToJournal(String journalId, String pageTitle) async {
                             return ListTile(
                               title: Text(page['title']),
                               onTap: () async {
-  final journalId = journals[index - 1]['id'];
-  final journalName = journals[index - 1]['title'] ?? 'Untitled Journal';
+                                final journalId = journals[focusedJournalIndex - 1]['id'];
+                                final pageId = page['id'];
 
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => JournalPage(
-        journalName: journalName,
-        journalId: journalId,
-      ),
-    ),
-  ).then((_) async {
-    await _loadPages(journalId); // Refresh page list after returning
-    setState(() {
-      focusedJournalIndex = index;
-      showPageList = true; // Show page list again
-    });
-  });
-},
-
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => IndivPageView(
+                                      journalId: journalId,
+                                      pageId: pageId,
+                                    ),
+                                  ),
+                                ).then((_) async {
+                                  await _loadPages(journalId); // Refresh page list after returning
+                                  setState(() {
+                                    focusedJournalIndex = focusedJournalIndex;
+                                    showPageList = true; // Show page list again
+                                  });
+                                });
+                              },
                             );
                           },
                         ),
