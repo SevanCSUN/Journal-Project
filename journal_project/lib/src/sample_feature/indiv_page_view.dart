@@ -105,46 +105,80 @@ class IndivPageViewState extends State<IndivPageView> {
   }
 
   Future<void> _confirmDeletePage() async {
-  final userConfirmed = await showDialog<bool>(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: const Text('Delete Page'),
-        content: const Text('Are you sure you want to delete this page? This action cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context, false); // User cancels the deletion
-            },
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context, true); // User confirms the deletion
-            },
-            child: const Text('Delete'),
-          ),
-        ],
-      );
-    },
-  );
-
-  if (userConfirmed == true) {
-    _deletePage();
-  }
-}
-
-Future<void> _deletePage() async {
-  final user = _auth.currentUser;
-  if (user == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('User not authenticated')),
+    final userConfirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete Page'),
+          content: const Text('Are you sure you want to delete this page? This action cannot be undone.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context, false); // User cancels the deletion
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context, true); // User confirms the deletion
+              },
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
     );
-    return;
+
+    if (userConfirmed == true) {
+      _deletePage();
+    }
   }
 
-  try {
-    // Reference to the page document
+  Future<void> _deletePage() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User not authenticated')),
+      );
+      return;
+    }
+
+    try {
+      // Reference to the page document
+      final docRef = _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('journals')
+          .doc(widget.journalId)
+          .collection('pages')
+          .doc(widget.pageId);
+
+      // Delete the document
+      await docRef.delete();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Page deleted successfully.')),
+      );
+
+      // Navigate back to the previous screen
+      Navigator.pop(context);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete page: $e')),
+      );
+    }
+  }
+
+
+  Future<void> _saveDocument() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User not authenticated')),
+      );
+      return;
+    }
+
     final docRef = _firestore
         .collection('users')
         .doc(user.uid)
@@ -153,79 +187,45 @@ Future<void> _deletePage() async {
         .collection('pages')
         .doc(widget.pageId);
 
-    // Delete the document
-    await docRef.delete();
+    try {
+      // Get the delta from the document
+      final delta = document.toDelta();
+      final ops = delta.toList();
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Page deleted successfully.')),
-    );
+      // Manually convert each operation to a map of primitives
+      final List<Map<String, dynamic>> contentAsJson = ops.map((op) {
+        // op.data should be text or a Map representing inserts like embeds
+        // op.attributes is a Map<String, dynamic> or null
+        return {
+          'insert': op.data, // Usually a String or a Map for embedded objects
+          if (op.attributes != null) 'attributes': op.attributes,
+        };
+      }).toList();
 
-    // Navigate back to the previous screen
-    Navigator.pop(context);
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to delete page: $e')),
-    );
-  }
-}
-
-
-  Future<void> _saveDocument() async {
-  final user = _auth.currentUser;
-  if (user == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('User not authenticated')),
-    );
-    return;
-  }
-
-  final docRef = _firestore
-      .collection('users')
-      .doc(user.uid)
-      .collection('journals')
-      .doc(widget.journalId)
-      .collection('pages')
-      .doc(widget.pageId);
-
-  try {
-    // Get the delta from the document
-    final delta = document.toDelta();
-    final ops = delta.toList();
-
-    // Manually convert each operation to a map of primitives
-    final List<Map<String, dynamic>> contentAsJson = ops.map((op) {
-      // op.data should be text or a Map representing inserts like embeds
-      // op.attributes is a Map<String, dynamic> or null
-      return {
-        'insert': op.data, // Usually a String or a Map for embedded objects
-        if (op.attributes != null) 'attributes': op.attributes,
+      final snapshot = await docRef.get();
+      final dataToSave = {
+        'content': contentAsJson,
+        'updatedAt': FieldValue.serverTimestamp(),
+        'title': pageTitle,
       };
-    }).toList();
 
-    final snapshot = await docRef.get();
-    final dataToSave = {
-      'content': contentAsJson,
-      'updatedAt': FieldValue.serverTimestamp(),
-      'title': pageTitle,
-    };
-
-    if (snapshot.exists) {
-      await docRef.update(dataToSave);
+      if (snapshot.exists) {
+        await docRef.update(dataToSave);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Document updated successfully!')),
+        );
+      } else {
+        await docRef.set(dataToSave);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Document created successfully!')),
+        );
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Document updated successfully!')),
-      );
-    } else {
-      await docRef.set(dataToSave);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Document created successfully!')),
+        SnackBar(content: Text('Failed to save document: $e')),
       );
     }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to save document: $e')),
-    );
   }
-}
 
 
 
@@ -236,14 +236,14 @@ Future<void> _deletePage() async {
         title: Text(pageTitle),
         actions: [
           IconButton(
-          icon: const Icon(Icons.delete),
-          onPressed: _confirmDeletePage, // Call the delete confirmation method
+            icon: const Icon(Icons.delete),
+            onPressed: _confirmDeletePage, // Call the delete confirmation method
           ),
           IconButton(
             icon: const Icon(Icons.save),
             onPressed: _saveDocument,
           ),
-          
+
         ],
       ),
       body: Column(
@@ -260,5 +260,3 @@ Future<void> _deletePage() async {
     );
   }
 }
-
-

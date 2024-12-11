@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'task_creation_screen.dart';
+import 'journal_manager.dart';
+import 'task.dart';
 
 class TaskModalScreen extends StatelessWidget {
-  final String taskName;
-  final String dateTime;
+  final Task task;
+  final String journalId;
 
-  const TaskModalScreen({super.key, 
-    required this.taskName,
-    required this.dateTime,
+  const TaskModalScreen({
+    super.key,
+    required this.task,
+    required this.journalId,
   });
 
   @override
@@ -24,7 +29,7 @@ class TaskModalScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const SizedBox(), // Empty space for alignment
+              const SizedBox(),
               const Text(
                 '',
                 style: TextStyle(),
@@ -36,32 +41,17 @@ class TaskModalScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          // Task Name and Date/Time
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                taskName,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                dateTime,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.black54,
-                ),
-              ),
-            ],
-          ),
+
+          // Task Details
+          _buildTaskDetails(context),
+
           const Divider(
             color: Colors.black26,
             thickness: 1,
             height: 16,
           ),
           const SizedBox(height: 16),
+
           // Action Buttons
           Wrap(
             spacing: 16,
@@ -71,38 +61,73 @@ class TaskModalScreen extends StatelessWidget {
                 icon: Icons.copy,
                 label: 'Duplicate',
                 color: Colors.blue,
-                onPressed: () {
-                  // Duplicate functionality here
-                },
+                onPressed: () => _duplicateTask(context),
               ),
               _buildActionButton(
                 icon: Icons.edit,
                 label: 'Edit Task',
                 color: Colors.orange,
-                onPressed: () {
-                  // Edit functionality here
-                },
+                onPressed: () => _editTask(context),
               ),
               _buildActionButton(
                 icon: Icons.delete,
                 label: 'Delete',
                 color: Colors.red,
-                onPressed: () {
-                  // Delete functionality here
-                },
+                onPressed: () => _confirmDeleteTask(context),
               ),
               _buildActionButton(
                 icon: Icons.check_circle,
                 label: 'Complete',
                 color: Colors.green,
-                onPressed: () {
-                  // Complete functionality here
-                },
+                onPressed: () => _completeTask(context),
               ),
             ],
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTaskDetails(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          task.title,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        if (task.description.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 4.0),
+            child: Text(task.description),
+          ),
+        if (task.dueDate != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4.0),
+            child: Text('Due Date: ${DateFormat('EEE, MMM d, yyyy').format(task.dueDate!)}'),
+          ),
+        if (task.time != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4.0),
+            child: Text('Time: ${task.time!.format(context)}'),
+          ),
+        if (task.reminder != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4.0),
+            child: Text('Reminder: ${task.reminder}'),
+          ),
+        Padding(
+          padding: const EdgeInsets.only(top: 4.0),
+          child: Text('Priority: ${task.priority}'),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 4.0),
+          child: Text('Color: ${task.color}'),
+        ),
+      ],
     );
   }
 
@@ -125,5 +150,92 @@ class TaskModalScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _duplicateTask(BuildContext context) async {
+    final journalManager = JournalManager();
+    final newTaskName = '${task.title} Copy';
+
+    final duplicatedTask = Task(
+      id: '',
+      title: newTaskName,
+      description: task.description,
+      dueDate: task.dueDate,
+      time: task.time,
+      reminder: task.reminder,
+      priority: task.priority,
+      color: task.color,
+      completed: false,
+    );
+
+    try {
+      await journalManager.addTask(journalId, duplicatedTask);
+      Navigator.pop(context);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error duplicating task: $e')),
+      );
+    }
+  }
+
+  void _editTask(BuildContext context) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TaskCreationScreen(
+          journalId: journalId,
+          task: task, // Pass the task object
+        ),
+      ),
+    );
+
+    if (result == true) {
+      Navigator.pop(context); // Ensure modal is closed after editing
+    }
+  }
+
+  void _confirmDeleteTask(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete Task'),
+          content: const Text('Are you sure you want to delete this task?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                final journalManager = JournalManager();
+                try {
+                  await journalManager.deleteTask(journalId, task.id);
+                  Navigator.pop(context);
+                  Navigator.pop(context); // Close modal
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error deleting task: $e')),
+                  );
+                }
+              },
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _completeTask(BuildContext context) async {
+    final journalManager = JournalManager();
+    try {
+      await journalManager.updateTaskFields(journalId, task.id, {'completed': true});
+      Navigator.pop(context); // Close modal
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error completing task: $e')),
+      );
+    }
   }
 }
