@@ -94,7 +94,7 @@ class TaskCreationScreenState extends State<TaskCreationScreen> {
           _buildDropdownListTile(
             title: 'Color',
             value: _color,
-            items: ['None', 'Red', 'Green', 'Blue'],
+            items: ['None', 'Red', 'Green', 'Blue', 'Orange', 'Yellow'],
             onChanged: (value) => setState(() {
               _color = value!;
             }),

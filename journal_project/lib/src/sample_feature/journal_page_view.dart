@@ -551,6 +551,10 @@ class JournalPageState extends State<JournalPage> with SingleTickerProviderState
         return Colors.green;
       case 'Blue':
         return Colors.blue;
+      case 'Orange':
+        return Colors.orange;
+      case 'Yellow':
+        return Colors.yellow;
       default:
         return Colors.grey;
     }

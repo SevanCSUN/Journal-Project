@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../settings/settings_view.dart';
-import 'sample_item.dart';
 import 'journal_page_view.dart';
 import 'journal_manager.dart';
 import 'indiv_page_view.dart';
@@ -11,11 +11,9 @@ import 'task.dart';
 class LandingPage extends StatefulWidget {
   const LandingPage({
     super.key,
-    this.items = const [SampleItem(1), SampleItem(2), SampleItem(3)],
   });
 
   static const routeName = '/landing';
-  final List<SampleItem> items;
 
   @override
   State<LandingPage> createState() => _LandingPageState();
@@ -28,13 +26,219 @@ class _LandingPageState extends State<LandingPage> {
   bool isLoadingPages = false;
   List<Map<String, dynamic>> journals = []; // List of journals fetched from Firestore
   bool isLoadingJournals = true; // Loading indicator for journals
+  Map<DateTime, List<Task>> weeklyTasks = {}; // Weekly tasks from all journals
   final JournalManager _journalManager = JournalManager();
 
   @override
   void initState() {
     super.initState();
     _loadJournals();
+    _fetchWeeklyTasks();
   }
+
+  /// Fetch tasks from all journals
+  void _fetchWeeklyTasks() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('journals')
+        .snapshots()
+        .listen((journalSnapshot) {
+      final Map<DateTime, List<Task>> groupedTasks = {};
+
+      for (final journal in journalSnapshot.docs) {
+        final journalId = journal.id;
+
+        // Add a real-time listener for each journal's tasks
+        FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('journals')
+            .doc(journalId)
+            .collection('tasks')
+            .snapshots()
+            .listen((taskSnapshot) {
+          for (final taskDoc in taskSnapshot.docs) {
+            final taskData = taskDoc.data();
+            final task = Task.fromMap({...taskData, 'id': taskDoc.id});
+
+            if (task.dueDate != null) {
+              // Normalize the date to midnight
+              final normalizedDate = DateTime(
+                task.dueDate!.year,
+                task.dueDate!.month,
+                task.dueDate!.day,
+              );
+
+              // Add tasks to the grouped map
+              if (!groupedTasks.containsKey(normalizedDate)) {
+                groupedTasks[normalizedDate] = [];
+              }
+
+              // Update or replace existing tasks for the day
+              groupedTasks[normalizedDate]!.removeWhere((t) => t.id == task.id);
+              groupedTasks[normalizedDate]!.add(task);
+            }
+          }
+
+          // Update state for real-time changes
+          setState(() {
+            weeklyTasks = groupedTasks;
+          });
+        });
+      }
+    });
+  }
+
+
+
+
+
+  /// Display all the tasks from all journals in a given day
+  void _showTasksForDay(DateTime day) {
+    final tasks = weeklyTasks[day] ?? [];
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(
+            'Tasks for ${DateFormat('EEE, MMM d').format(day)}',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: tasks.isEmpty
+              ? const Text('No tasks for this day.')
+              : SizedBox(
+            height: 300, // Fixed height for content
+            width: double.maxFinite, // Ensure it takes full width
+            child: ListView.separated(
+              itemCount: tasks.length,
+              separatorBuilder: (context, index) => Divider(
+                color: Colors.grey.shade300,
+                thickness: 1,
+              ), // Add a divider between tasks
+              itemBuilder: (context, index) {
+                final task = tasks[index];
+                return FutureBuilder<String>(
+                  future: _getJournalIdForTask(task.id),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    final journalId = snapshot.data ?? 'Unknown Journal';
+
+                    // Map predefined color names to Flutter `Color` objects
+                    const predefinedColors = {
+                      'None': Colors.transparent,
+                      'Red': Colors.red,
+                      'Green': Colors.green,
+                      'Blue': Colors.blue,
+                      'Orange': Colors.orange,
+                      'Yellow': Colors.yellow,
+                    };
+
+                    // Resolve color for the task
+                    final resolvedColor = predefinedColors[task.color] ?? Colors.grey;
+
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: task.completed
+                            ? Colors.lightGreen.shade100 // Light green for completed tasks
+                            : Colors.transparent, // Default for non-completed tasks
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: resolvedColor,
+                          radius: 8, // Small circle to indicate task color
+                        ),
+                        title: Text(
+                          task.title,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            decoration: task.completed
+                                ? TextDecoration.lineThrough // Strike-through for completed tasks
+                                : TextDecoration.none,
+                          ),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (task.description.isNotEmpty)
+                              Text(task.description),
+                            if (task.dueDate != null)
+                              Text(
+                                'Due: ${DateFormat('EEE, MMM d, yyyy h:mm a').format(task.dueDate!)}',
+                              ),
+                            if (task.priority.isNotEmpty)
+                              Text('Priority: ${task.priority}'),
+                          ],
+                        ),
+                        onTap: () {
+                          Navigator.pop(context); // Close dialog
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => JournalPage(
+                                journalName: 'Journal for ${task.title}',
+                                journalId: journalId,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
+  /// Fetch journalId for a given taskId (if journalId is not stored in `Task`).
+  Future<String> _getJournalIdForTask(String taskId) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return 'Unknown';
+
+    final journalsSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('journals')
+        .get();
+
+    for (final journal in journalsSnapshot.docs) {
+      final journalId = journal.id;
+      final taskSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('journals')
+          .doc(journalId)
+          .collection('tasks')
+          .doc(taskId)
+          .get();
+
+      if (taskSnapshot.exists) {
+        return journalId;
+      }
+    }
+    return 'Unknown';
+  }
+
+
+
+
 
   /// Add a new page to the focused journal
   Future<void> _addPageToJournal(String journalId, String pageTitle) async {
@@ -126,7 +330,15 @@ class _LandingPageState extends State<LandingPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Journal App Home-Page'),
+        title: const Text('Journaled',
+          style: TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+            fontStyle: FontStyle.italic,
+            fontFamily: 'SFPro',
+            letterSpacing: 1.5,
+          ),
+        ),
         automaticallyImplyLeading: false,
         actions: [
           IconButton(
@@ -140,13 +352,13 @@ class _LandingPageState extends State<LandingPage> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Container holds the 7 columns (days of the week)
+            // Weekly view container
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Container(
-                height: 230, // Height for the container
+                height: 230,
                 decoration: BoxDecoration(
-                  color: isDarkTheme ? Colors.grey.shade800 : Colors.grey.shade200, // background color
+                  color: isDarkTheme ? Colors.grey.shade800 : Colors.grey.shade200,
                   borderRadius: BorderRadius.circular(10),
                   boxShadow: [
                     BoxShadow(
@@ -158,40 +370,107 @@ class _LandingPageState extends State<LandingPage> {
                   ],
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(8.0), // Add padding inside the container
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween, // Align the columns to the start and end
-                        children: List.generate(7, (index) {
-                          final days = ['MON', 'TUES', 'WED', 'THUR', 'FRI', 'SAT', 'SUN'];
-                          return SizedBox(
-                            width: 45, // width for each container
-                            child: Column(
-                              children: [
-                                Text(
-                                  days[index], // text for each day
-                                  style: const TextStyle(fontSize: 12),
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: List.generate(7, (index) {
+                      final days = ['MON', 'TUES', 'WED', 'THUR', 'FRI', 'SAT', 'SUN'];
+                      final today = DateTime.now();
+                      final currentDay = DateTime(
+                        today.year,
+                        today.month,
+                        today.day,
+                      ).subtract(Duration(days: today.weekday - 1 - index)); // Normalize to midnight
+                      final tasks = weeklyTasks[currentDay] ?? [];
+                      const maxVisibleTasks = 10; // Maximum number of visible blocks
+
+                      return GestureDetector(
+                        onTap: () => _showTasksForDay(currentDay),
+                        child: Column(
+                          children: [
+                            Text(
+                              days[index],
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                            const SizedBox(height: 8),
+                            Expanded(
+                              child: Container(
+                                width: 45,
+                                decoration: BoxDecoration(
+                                  color: isDarkTheme ? Colors.blue.shade700 : Colors.blue.shade100,
+                                  borderRadius: BorderRadius.circular(5),
                                 ),
-                                const SizedBox(height: 8), // Space between label and rectangle
-                                Container(
-                                  height: 180, // Height of each rectangle
-                                  decoration: BoxDecoration(
-                                    color: isDarkTheme ? Colors.blue.shade700 : Colors.blue.shade100, // Placeholder color for the rectangles
-                                    borderRadius: BorderRadius.circular(5),
+                                child: Center(
+                                  child: tasks.isEmpty
+                                      ? const SizedBox.shrink()
+                                      : Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: List.generate(
+                                      tasks.length > maxVisibleTasks
+                                          ? maxVisibleTasks
+                                          : tasks.length,
+                                          (taskIndex) {
+                                        if (taskIndex == maxVisibleTasks - 1 &&
+                                            tasks.length > maxVisibleTasks) {
+                                          // Overflow indicator
+                                          return const Text(
+                                            '+',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
+                                            ),
+                                          );
+                                        }
+                                        final taskColor = tasks[taskIndex].color;
+                                        Color resolvedColor;
+
+                                            // Map predefined color names to Flutter colors
+                                            const predefinedColors = {
+                                              'Red': Colors.red,
+                                              'Blue': Colors.blue,
+                                              'Green': Colors.green,
+                                              'Yellow': Colors.yellow,
+                                              'Purple': Colors.purple,
+                                              'Orange': Colors.orange,
+                                            };
+
+                                            // Resolve color
+                                            if (predefinedColors.containsKey(taskColor)) {
+                                              resolvedColor = predefinedColors[taskColor]!;
+                                            } else {
+                                              // Attempt to parse as hexadecimal, fallback to grey if invalid
+                                              try {
+                                                resolvedColor = Color(int.parse(taskColor, radix: 16)).withOpacity(1.0);
+                                              } catch (_) {
+                                                resolvedColor = Colors.grey; // Default color
+                                              }
+                                            }
+
+                                            return Container(
+                                              margin: const EdgeInsets.symmetric(vertical: 2),
+                                              width: 35,
+                                              height: 12,
+                                              decoration: BoxDecoration(
+                                                color: resolvedColor,
+                                                borderRadius: BorderRadius.circular(2),
+                                              ),
+                                            );
+
+                                          },
+                                    ),
                                   ),
                                 ),
-                              ],
+                              ),
                             ),
-                          );
-                        }),
-                      ),
-                    ],
+                          ],
+                        ),
+                      );
+                    }),
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 50), // Space between weekly view and journal list
+            const SizedBox(height: 35), // Space between weekly view and journal list
 
             // Horizontal journal list
             SizedBox(
@@ -514,61 +793,6 @@ class _LandingPageState extends State<LandingPage> {
     setState(() {
       journals.add({'id': journalId, 'title': journalTitle});
     });
-  }
-
-  // Fetch tasks from all journals
-  Future<Map<DateTime, List<Task>>> _fetchWeeklyTasks() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return {};
-
-    final Map<DateTime, List<Task>> weeklyTasks = {};
-    try {
-      // Get the start and end of the current week
-      final now = DateTime.now();
-      final startOfWeek = now.subtract(Duration(days: now.weekday - 1)); // Monday
-      final endOfWeek = startOfWeek.add(const Duration(days: 6)); // Sunday
-
-      // Fetch all journals
-      final journalSnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .collection('journals')
-          .get();
-
-      for (final journalDoc in journalSnapshot.docs) {
-        // Fetch tasks for the journal
-        final tasksSnapshot = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .collection('journals')
-            .doc(journalDoc.id)
-            .collection('tasks')
-            .get();
-
-        for (final taskDoc in tasksSnapshot.docs) {
-          final task = Task.fromMap({
-            ...taskDoc.data(),
-            'id': taskDoc.id,
-          });
-
-          if (task.dueDate != null &&
-              task.dueDate!.isAfter(startOfWeek) &&
-              task.dueDate!.isBefore(endOfWeek.add(const Duration(days: 1)))) {
-            // Group tasks by normalized date
-            final dateKey =
-            DateTime(task.dueDate!.year, task.dueDate!.month, task.dueDate!.day);
-            if (!weeklyTasks.containsKey(dateKey)) {
-              weeklyTasks[dateKey] = [];
-            }
-            weeklyTasks[dateKey]!.add(task);
-          }
-        }
-      }
-    } catch (e) {
-      print('Error fetching weekly tasks: $e');
-    }
-
-    return weeklyTasks;
   }
 
 }
