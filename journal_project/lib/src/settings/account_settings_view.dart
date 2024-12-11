@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AccountSettingsView extends StatelessWidget {
   const AccountSettingsView({super.key});
@@ -31,12 +32,12 @@ class AccountSettingsView extends StatelessWidget {
                     ListTile(
                       leading: const Icon(Icons.person),
                       title: Text(user.email ?? 'No email'),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.edit),
-                        onPressed: () {
-                          // Add functionality to edit username
-                        },
-                      ),
+                      // trailing: IconButton(
+                      //   icon: const Icon(Icons.edit),
+                      //   onPressed: () {
+                      //     // Add functionality to edit username
+                      //   },
+                      // ),
                     ),
                     const Divider(),
                     ListTile(
@@ -162,6 +163,9 @@ class AccountSettingsView extends StatelessWidget {
                 try {
                   User? user = FirebaseAuth.instance.currentUser;
                   if (user != null) {
+                    // Delete user record from Firestore
+                    await FirebaseFirestore.instance.collection('users').doc(user.uid).delete();
+                    // Delete user from Firebase Auth
                     await user.delete();
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
