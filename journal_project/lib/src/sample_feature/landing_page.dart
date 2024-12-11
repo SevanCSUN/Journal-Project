@@ -610,18 +610,18 @@ class _LandingPageState extends State<LandingPage> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Container(
-                                width: 60,
-                                height: 60,
+                                width: 80,
+                                height: 80,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.rectangle,
                                   borderRadius: BorderRadius.circular(10),
                                   image: const DecorationImage(
-                                    image: AssetImage('assets/images/placeholder_img.png'),
+                                    image: AssetImage('assets/images/Journal_Icon.png'),
                                     fit: BoxFit.cover,
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 10), // Space between image and text
+                              const SizedBox(height: 0), // Space between image and text
                               Text(
                                 journal['title'] ?? 'Untitled Journal', // Use journal title
                                 style: const TextStyle(fontSize: 14),
