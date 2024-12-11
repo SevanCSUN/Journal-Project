@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -160,8 +162,8 @@ class JournalPageState extends State<JournalPage> with SingleTickerProviderState
                               children: [
                                 if (task.dueDate != null)
                                   Text('Due: ${DateFormat('h:mm a').format(task.dueDate!)}'),
-                                if (task.description != null && task.description!.isNotEmpty)
-                                  Text(task.description!, style: const TextStyle(fontSize: 12)),
+                                if (task.description.isNotEmpty)
+                                  Text(task.description, style: const TextStyle(fontSize: 12)),
                               ],
                             ),
                             trailing: IconButton(

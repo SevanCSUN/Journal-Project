@@ -70,6 +70,7 @@ class LoginPageState extends State<LoginPage> {
               child: const Text('Login'),
             ),
             const SizedBox(height: 16.0), // Space between buttons
+            /*
             ElevatedButton(
               onPressed: () {
                 Navigator.pushReplacementNamed(context, LandingPage.routeName);
@@ -77,6 +78,7 @@ class LoginPageState extends State<LoginPage> {
               child: const Text('Continue as Guest'),
             ),
             const SizedBox(height: 16.0), // Space between buttons
+            */
             ElevatedButton(
               onPressed: () {
                 Navigator.push(
